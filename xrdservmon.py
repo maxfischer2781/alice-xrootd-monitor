@@ -42,7 +42,6 @@ def get_targets(target_pidpath):
     """Get the target processes to monitor, as mapping `{pid: (daemon_type, name)}`"""
     targets = {}  # pid => daemon_type, name
     # xrd stores pid as: pidpath/<name>/<daemon_type>.pid
-    target_name = os.path.split(target_pidpath)[-1]
     for daemon_type in ('cmsd', 'xrootd'):
         pid_file = os.path.join(target_pidpath, daemon_type + '.pid')
         try:
@@ -51,6 +50,7 @@ def get_targets(target_pidpath):
         except (OSError, IOError, ValueError) as err:
             APP_LOGGER.warning('failed to read PID file for daemon type %s: %s', daemon_type, err)
         else:
+            target_name = os.path.split(os.path.dirname(pid_file))[-1]
             if validate_process(pid, daemon_type):
                 targets[pid] = (daemon_type, target_name)
                 APP_LOGGER.debug('adding monitor target: type=%s, name=%s, pid=%s', daemon_type, target_name, pid)

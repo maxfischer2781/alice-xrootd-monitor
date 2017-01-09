@@ -1,12 +1,12 @@
 #!/usr/bin/python
 from __future__ import print_function, division, with_statement
 import os
-import re
 import sys
 import glob
 import argparse
 import subprocess
 import pickle
+import logging
 
 
 CLI = argparse.ArgumentParser("Manager for XRootD ServMon")
@@ -18,6 +18,10 @@ CLI_INFO.add_argument('--se-name', help='SE this server belongs to', required=Tr
 CLI_INFO.add_argument('--report-to', help='hostname or address to send reports to', default='localhost')
 CLI_MANAGER = CLI.add_argument_group("manager settings")
 CLI_MANAGER.add_argument('--run-path', help='basepath storing pid and state files', default='/tmp')
+
+
+logging.basicConfig()
+APP_LOGGER = logging.getLogger(os.path.basename(__file__))
 
 
 def validate_process(pid, name):
@@ -43,11 +47,14 @@ def get_targets(target_pidpath):
         try:
             with open(pid_file) as pid_data:
                 pid = int(next(pid_data))
-        except (OSError, IOError, ValueError):
-            pass
+        except (OSError, IOError, ValueError) as err:
+            APP_LOGGER.warning('failed to read PID file for daemon type %s: %s', daemon_type, err)
         else:
             if validate_process(pid, daemon_type):
                 targets[pid] = (daemon_type, target_name)
+                APP_LOGGER.debug('adding monitor target: type=%s, name=%s, pid=%s', daemon_type, target_name, pid)
+            else:
+                APP_LOGGER.warning('failed to read PID file for daemon type %s: %s', daemon_type, 'process not running')
     return targets
 
 

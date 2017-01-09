@@ -83,10 +83,11 @@ def dispatch_monitor(monitor_targets, run_path, se_name, report_to, target_port)
     command_env = os.environ.copy()
     command_env['MONALISA_HOST'] = report_to
     command_env['XRDSERVERPORT'] = target_port
-    print('starting monitor: cmd=%r, env+=%r' % (
+    APP_LOGGER.debug(
+        'starting monitor: cmd=%r, env+=%r',
         "' '".join(command),
         "':'".join((key + '=' + command_env[key]) for key in ('MONALISA_HOST', 'XRDSERVERPORT'))
-    ), file=sys.stderr)
+    )
     proc = subprocess.Popen(command, env=command_env)
     return proc
 
@@ -126,10 +127,10 @@ def ensure_monitor(target_pidpath, target_port, se_name, report_to, run_path):
     # if a valid monitor is already running, don't do anything
     if len(current_pids) == 1:
         if load_state(run_path=run_path) == monitor_targets:
-            print('monitor already running', file=sys.stderr)
+            APP_LOGGER.debug('monitor already running')
             return 0
     if not monitor_targets:
-        print('no targets to monitor', file=sys.stderr)
+        APP_LOGGER.warning('no targets to monitor')
         return 0
     monitor_proc = dispatch_monitor(monitor_targets=monitor_targets, run_path=run_path, se_name=se_name, report_to=report_to, target_port=target_port)
     return monitor_proc.wait()

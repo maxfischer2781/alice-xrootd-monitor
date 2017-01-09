@@ -129,6 +129,7 @@ def ensure_monitor(target_pidpath, target_port, se_name, report_to, run_path):
         if load_state(run_path=run_path) == monitor_targets:
             APP_LOGGER.debug('monitor already running')
             return 0
+        APP_LOGGER.warning('replacing outdated monitor')
     if not monitor_targets:
         APP_LOGGER.warning('no targets to monitor')
         return 0

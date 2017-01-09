@@ -11,8 +11,7 @@ import pickle
 
 CLI = argparse.ArgumentParser("Manager for XRootD ServMon")
 CLI_TARGET = CLI.add_argument_group("service to monitor")
-CLI_TARGET.add_argument('--target-pidpath', help='basepath storing pid files (all.pidpath)')
-CLI_TARGET.add_argument('--target-name', help='name of xrootd/cmsd to monitor (regex)', default='.*')
+CLI_TARGET.add_argument('--target-pidpath', help='basepath storing pid files (all.pidpath + name)')
 CLI_TARGET.add_argument('--target-port', help='port of xrootd to monitor', default=os.environ.get('XRDSERVERPORT', '1094'))
 CLI_INFO = CLI.add_argument_group("information to provide")
 CLI_INFO.add_argument('--se-name', help='SE this server belongs to', required=True)
@@ -34,22 +33,21 @@ def validate_process(pid, name):
 # What to Monitor
 #################
 # Todo: make class
-def get_targets(target_pidpath, target_name):
+def get_targets(target_pidpath):
     """Get the target processes to monitor, as mapping `{pid: (daemon_type, name)}`"""
     targets = {}  # pid => daemon_type, name
-    # xrd stores pid as: basepath/<name>/<daemon_type>.pid
-    for name_dir in (ndir for ndir in os.listdir(target_pidpath) if os.path.isdir(ndir)):
-        if re.match(target_name, name_dir):
-            for daemon_type in ('cmsd', 'xrootd'):
-                pid_file = os.path.join(target_pidpath, name_dir, daemon_type + '.pid')
-                try:
-                    with open(pid_file) as pid_data:
-                        pid = int(next(pid_data))
-                except (OSError, IOError, ValueError):
-                    pass
-                else:
-                    if validate_process(pid, daemon_type):
-                        targets[pid] = (daemon_type, name_dir)
+    # xrd stores pid as: pidpath/<name>/<daemon_type>.pid
+    target_name = os.path.split(target_pidpath)[-1]
+    for daemon_type in ('cmsd', 'xrootd'):
+        pid_file = os.path.join(target_pidpath, daemon_type + '.pid')
+        try:
+            with open(pid_file) as pid_data:
+                pid = int(next(pid_data))
+        except (OSError, IOError, ValueError):
+            pass
+        else:
+            if validate_process(pid, daemon_type):
+                targets[pid] = (daemon_type, target_name)
     return targets
 
 

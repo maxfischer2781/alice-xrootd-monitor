@@ -110,16 +110,19 @@ def monitor_pids(run_path):
 # State Glue
 #############
 # Todo: make class
-def store_state(run_path, targets):
+def store_state(run_path, monitor_targets, monitor_pid):
     """Store targets being monitored"""
     with open(run_path + 'xrdservmon_state.pkl', 'wb') as state_file:
-        pickle.dump({'process': sys.executable, 'targets': targets}, state_file, pickle.HIGHEST_PROTOCOL)
+        pickle.dump({'process': sys.executable, 'targets': monitor_targets, 'pid': monitor_pid}, state_file, 0)
 
 
 def load_state(run_path):
     """Load targets being monitored"""
-    with open(run_path + 'xrdservmon_state.pkl', 'rb') as state_file:
-        return pickle.load(state_file)['targets']
+    try:
+        with open(run_path + 'xrdservmon_state.pkl', 'rb') as state_file:
+            return pickle.load(state_file)['targets']
+    except (IOError, OSError):
+        return {}
 
 
 def ensure_monitor(target_pidpath, target_port, se_name, report_to, run_path):
@@ -136,6 +139,7 @@ def ensure_monitor(target_pidpath, target_port, se_name, report_to, run_path):
         APP_LOGGER.warning('no targets to monitor')
         return 0
     monitor_proc = dispatch_monitor(monitor_targets=monitor_targets, run_path=run_path, se_name=se_name, report_to=report_to, target_port=target_port)
+    store_state(run_path=run_path, monitor_targets=monitor_targets, monitor_pid=monitor_proc.pid)
     return monitor_proc.wait()
 
 

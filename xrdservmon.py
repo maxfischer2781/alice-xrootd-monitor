@@ -118,9 +118,9 @@ def load_state(run_path):
         return pickle.load(state_file)['targets']
 
 
-def ensure_monitor(target_pidpath, target_name, target_port, se_name, report_to, run_path):
+def ensure_monitor(target_pidpath, target_port, se_name, report_to, run_path):
     """Deploy or validate monitoring process"""
-    monitor_targets = get_targets(target_pidpath=target_pidpath, target_name=target_name)
+    monitor_targets = get_targets(target_pidpath=target_pidpath)
     current_pids = list(monitor_pids(run_path=run_path, monitor_name='servMon.sh'))
     # if a valid monitor is already running, don't do anything
     if len(current_pids) == 1:

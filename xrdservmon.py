@@ -92,16 +92,18 @@ def dispatch_monitor(monitor_targets, run_path, se_name, report_to, target_port)
     return proc
 
 
-def monitor_pids(run_path, monitor_name=''):
+def monitor_pids(run_path):
     """Yield the pid of any running monitoring process"""
     pid_basename = run_path + 'xrdservom.pid'  # TODO: Unify #1
     pid_files = glob.glob(pid_basename + '*')
     for pid_file in pid_files:
         with open(pid_file) as pid:
             pid = int(pid.readline().strip())
-        if validate_process(pid, monitor_name):
+        if validate_process(pid, 'perl'):
+            APP_LOGGER.debug('monitor exists: pid=%s', pid)
             yield pid
         else:
+            APP_LOGGER.debug('monitor defunct: pid=%s', pid)
             os.unlink(pid_file)
 
 
@@ -123,11 +125,11 @@ def load_state(run_path):
 def ensure_monitor(target_pidpath, target_port, se_name, report_to, run_path):
     """Deploy or validate monitoring process"""
     monitor_targets = get_targets(target_pidpath=target_pidpath)
-    current_pids = list(monitor_pids(run_path=run_path, monitor_name='perl'))
+    current_pids = list(monitor_pids(run_path=run_path))
     # if a valid monitor is already running, don't do anything
     if len(current_pids) == 1:
         if load_state(run_path=run_path) == monitor_targets:
-            APP_LOGGER.debug('monitor already running')
+            APP_LOGGER.warning('monitor already running')
             return 0
         APP_LOGGER.warning('replacing outdated monitor')
     if not monitor_targets:

@@ -85,8 +85,8 @@ def dispatch_monitor(monitor_targets, run_path, se_name, report_to, target_port)
     command_env['XRDSERVERPORT'] = target_port
     APP_LOGGER.debug(
         'starting monitor: cmd=%r, env+=%r',
-        "' '".join(command),
-        "':'".join((key + '=' + command_env[key]) for key in ('MONALISA_HOST', 'XRDSERVERPORT'))
+        "'" + "' '".join(command) +  "'",
+        "'" + "':'".join((key + '=' + command_env[key]) for key in ('MONALISA_HOST', 'XRDSERVERPORT')) + "'"
     )
     proc = subprocess.Popen(command, env=command_env)
     return proc

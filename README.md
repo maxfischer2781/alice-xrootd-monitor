@@ -1,7 +1,8 @@
 # XRootD Alice Monitor
 
-Monitoring for XRootD servers use by the ALICE collaboration.
+Monitoring for XRootD servers for the MonALISA framework.
 This tool collects data about a local XRootD server and sends it to a MonALISA host.
+It is written primarily for XRootD servers used by the ALICE collaboration.
 
 # About
 

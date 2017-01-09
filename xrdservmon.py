@@ -18,6 +18,7 @@ CLI_INFO.add_argument('--se-name', help='SE this server belongs to', required=Tr
 CLI_INFO.add_argument('--report-to', help='hostname or address to send reports to', default='localhost')
 CLI_MANAGER = CLI.add_argument_group("manager settings")
 CLI_MANAGER.add_argument('--run-path', help='basepath storing pid and state files', default='/tmp')
+CLI_MANAGER.add_argument('--log-level', help='Log level to use', default='WARNING')
 
 
 logging.basicConfig()
@@ -136,7 +137,14 @@ def ensure_monitor(target_pidpath, target_port, se_name, report_to, run_path):
 
 def main():
     args = CLI.parse_args()
-    sys.exit(ensure_monitor(**vars(args)))
+    options = vars(args)
+    log_level = options.pop('log_level')
+    try:
+        log_level = int(log_level)
+    except ValueError:
+        log_level = getattr(logging, log_level)
+    APP_LOGGER.setLevel(log_level)
+    sys.exit(ensure_monitor(**options))
 
 if __name__ == '__main__':
     main()

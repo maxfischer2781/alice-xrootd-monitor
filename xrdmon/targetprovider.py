@@ -31,14 +31,16 @@ class TargetProvider(object):
             yield report
 
     def _insert_target(self, target):
-        self.targets.add(target)
-        if self._on_insert:
-            self._on_insert(target)
+        if target not in self.targets:
+            self.targets.add(target)
+            if self._on_insert:
+                self._on_insert(target)
 
     def _remove_target(self, target):
-        self.targets.discard(target)
-        if self._on_remove:
-            self._on_remove(target)
+        if target in self.targets:
+            self.targets.discard(target)
+            if self._on_remove:
+                self._on_remove(target)
 
     def _inspect_report(self, report):
         pass

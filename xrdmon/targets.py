@@ -55,6 +55,9 @@ class XrdDaemonTarget(object):
             return self._identity == other._identity
         return NotImplemented
 
+    def __repr__(self):
+        return '<%s daemon target %s, pid %s, udp %s>' % (self.flavour, self.name, self.pid, self.port)
+
 
 class CmsdTarget(XrdDaemonTarget):
     """cmsd process"""

@@ -32,12 +32,14 @@ class TargetProvider(object):
 
     def _insert_target(self, target):
         if target not in self.targets:
+            self._logger.info('insert target: %s', target)
             self.targets.add(target)
             if self._on_insert:
                 self._on_insert(target)
 
     def _remove_target(self, target):
         if target in self.targets:
+            self._logger.info('remove target: %s', target)
             self.targets.discard(target)
             if self._on_remove:
                 self._on_remove(target)
@@ -54,8 +56,6 @@ class XRootDTargetProvider(TargetProvider):
         if 'pgm' in report:
             new_target = targets.XrdDaemonTarget.from_report(report)
             self._insert_target(new_target)
-            self._logger.info('insert target: %s', new_target)
         for target in self.targets:
             if not target.alive:
                 self._remove_target(target)
-                self._logger.info('remove target: %s', target)

@@ -61,3 +61,4 @@ class FileBackend(object):
                     'space_total', 'space_free', 'space_largestfreechunk'
                 )
             )
+        self._write_data(*content)

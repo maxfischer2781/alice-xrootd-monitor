@@ -30,7 +30,7 @@ if __name__ == '__main__':
     try:
         log_level = int(log_level)
     except ValueError:
-        log_level = getattr(logging, log_level)
+        log_level = getattr(logging, log_level.upper())
     APP_LOGGER = logging.getLogger(os.path.basename('xrdmon'))
     APP_LOGGER.setLevel(log_level)
     APP_LOGGER.info('report_port=%s, file_path=%s', options.report_port, options.file_path)

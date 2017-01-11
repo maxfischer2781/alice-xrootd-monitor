@@ -22,3 +22,4 @@ if __name__ == '__main__':
         report_port=options.report_port,
         backends=[filepath.FileBackend(file_path=options.file_path)]
     )
+    main.run()

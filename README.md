@@ -1,23 +1,26 @@
-# XRootD Alice Monitor
+# XRootD Monitor
 
-Monitoring for ALICE XRootD servers for the MonALISA framework.
-This tool collects data about a local XRootD server and sends it to a MonALISA host.
-It is written for services of the ALICE collaboration, and may make assumptions.
+Monitoring suite for XRootD servers.
+This tool collects, transforms and generates data about a local XRootD server.
+Multiple backends are available to pass on this data.
 
 # About
 
-This tool is based on Adrian's [alicexrd](https://github.com/adriansev/alicexrd) toolset,
-aiming to separate responsibilities and simplify service management with Puppet.
-Monitoring is the *only* ALICE-specific functionality that is not feasible to provide via service management tools.
-
 At the moment, the repository is public for reference only.
-If you just want to deploy an XRootD service for ALICE, *use Adrian's tools*.
+It is under development and testing at FZK.
 
-# Dependencies
+This suite was initially written for XRootD servers of the ALICE collaboration.
+Monitoring is the *only* ALICE-specific functionality that is not feasible to provide via service management tools.
+If you just want to deploy an XRootD service for ALICE, use [Adrian's alicexrd tools](https://github.com/adriansev/alicexrd).
 
-The current version relies on `servMon.sh` and `ApMon` being available.
-Both are available from the `alicexrdplugins` metapackage, and can be installed via:
+# Installation
 
-    rpm -Uvh http://linuxsoft.cern.ch/wlcg/sl6/x86_64/wlcg-repo-1.0.0-1.el6.noarch.rpm
-    yum install alicexrdplugins
-   
+The suite can be installed using standard Python package manager `pip` or from source.
+
+Simply run
+
+    pip install xrdmon
+
+or check out this repository and run
+
+    python setup.py install

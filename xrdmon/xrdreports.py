@@ -40,7 +40,7 @@ class XRootDReportManager(object):
         """Start collecting reports"""
         if self._reportstreamer is None:
             self._reportstreamer = subprocess.Popen(
-                ['mpxstat', '-p', str(self.port), '-f', 'cgi'],
+                ['mpxstats', '-p', str(self.port), '-f', 'cgi'],
                 stdout=subprocess.PIPE
             )
 

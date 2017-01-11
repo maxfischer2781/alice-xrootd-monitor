@@ -1,3 +1,4 @@
+from __future__ import division, absolute_import, print_function
 import argparse
 import os
 
@@ -18,6 +19,7 @@ CLI.add_argument(
 
 if __name__ == '__main__':
     options = CLI.parse_args()
+    print('port', options.report_port, 'path', options.file_path)
     main = core.Core(
         report_port=options.report_port,
         backends=[filepath.FileBackend(file_path=options.file_path)]

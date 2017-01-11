@@ -8,7 +8,7 @@ import time
 from . import utils
 
 
-class XrdDaemonJob(object):
+class XrdDaemonTarget(object):
     """
     Baseclass for daemons of XRootD
     """
@@ -42,7 +42,7 @@ class XrdDaemonJob(object):
                         port=report.get('info.port', 0)
                     )
                 return scls.from_report(report)
-        raise ValueError('unknown "pgm" flavour: %s' % report["pgm"])
+        raise ValueError('unknown "pgm" flavour: %r' % report["pgm"])
 
     def _get_identity(self):
         return self.__class__, self.flavour, self.name, self.pid, self.port
@@ -51,17 +51,17 @@ class XrdDaemonJob(object):
         return self._hash
 
     def __eq__(self, other):
-        if isinstance(other, XrdDaemonJob):
+        if isinstance(other, XrdDaemonTarget):
             return self._identity == other._identity
         return NotImplemented
 
 
-class CmsdTarget(XrdDaemonJob):
+class CmsdTarget(XrdDaemonTarget):
     """cmsd process"""
     flavour = "cmsd"
 
 
-class XRootDTarget(XrdDaemonJob):
+class XRootDTarget(XrdDaemonTarget):
     """xrootd process"""
     flavour = "xrootd"
 

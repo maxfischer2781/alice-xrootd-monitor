@@ -27,7 +27,7 @@ class FileBackend(object):
 
     def insert_target(self, target):
         """Insert a new target for data extraction"""
-        if isinstance(target, targets.XrdDaemonJob):
+        if isinstance(target, targets.XrdDaemonTarget):
             self._write_data(
                 ('target', 'insert'),
                 ('name', target.name),
@@ -40,7 +40,7 @@ class FileBackend(object):
 
     def remove_target(self, target):
         """Remove an existing target from data extraction"""
-        if isinstance(target, targets.XrdDaemonJob):
+        if isinstance(target, targets.XrdDaemonTarget):
             self._write_data(
                 ('target', 'remove'),
                 ('name', target.name),

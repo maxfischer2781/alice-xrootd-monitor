@@ -47,7 +47,7 @@ class XRootDTargetProvider(TargetProvider):
     """
     def _inspect_report(self, report):
         if 'pgm' in report:
-            new_target = targets.XrdDaemonJob.from_report(report)
+            new_target = targets.XrdDaemonTarget.from_report(report)
             self._insert_target(new_target)
         for target in self.targets:
             if not target.alive:

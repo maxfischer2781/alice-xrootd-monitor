@@ -56,7 +56,7 @@ class XrdDaemonTarget(object):
         return NotImplemented
 
     def __repr__(self):
-        return '<%s daemon target %s, pid %s, udp %s>' % (self.flavour, self.name, self.pid, self.port)
+        return '<%s daemon target name=%s, pid=%s, port=%s>' % (self.flavour, self.name, self.pid, self.port)
 
 
 class CmsdTarget(XrdDaemonTarget):

@@ -39,9 +39,8 @@ class Core(object):
                     self._logger.info('running update: %s', time.time())
                     for backend in self.backends:
                         backend.update()
-                    self._next_update += ((
-                                              time.time() - self._next_update // self.update_interval
-                                          ) + 1) * self.update_interval
+                    self._next_update += \
+                        ((time.time() - self._next_update // self.update_interval) + 1) * self.update_interval
 
     def remove_target_callback(self, target):
         """Callback for target removal, forwarding to backends"""

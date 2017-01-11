@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import
 import time
+import logging
 
 from . import xrdreports
 from . import targetprovider
@@ -19,6 +20,7 @@ class Core(object):
         self.update_interval = update_interval
         self._last_update = time.time() - self.update_interval
         self.backends = backends if backends is not None else []
+        self._logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
     def run(self):
         """
@@ -33,11 +35,11 @@ class Core(object):
             for report in report_stream:
                 for backend in self.backends:
                     backend.digest_report(report)
-            update_delta = time.time() - self._last_update
-            if update_delta > self.update_interval:
-                for backend in self.backends:
-                    backend.update(delta=update_delta)
-                self._last_update += (update_delta // self.update_interval) * self.update_interval
+                update_delta = time.time() - self._last_update
+                if update_delta > self.update_interval:
+                    for backend in self.backends:
+                        backend.update(delta=update_delta)
+                    self._last_update += (update_delta // self.update_interval) * self.update_interval
 
     def remove_target_callback(self, target):
         """Callback for target removal, forwarding to backends"""

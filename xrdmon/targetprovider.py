@@ -1,4 +1,6 @@
 from __future__ import division, absolute_import
+import logging
+
 from . import targets
 
 
@@ -21,6 +23,7 @@ class TargetProvider(object):
         self._on_remove = on_remove
         self._on_insert = on_insert
         self.targets = set()
+        self._logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
     def __iter__(self):
         for report in self.report_stream:
@@ -49,6 +52,8 @@ class XRootDTargetProvider(TargetProvider):
         if 'pgm' in report:
             new_target = targets.XrdDaemonTarget.from_report(report)
             self._insert_target(new_target)
+            self._logger.info('insert target: %s', new_target)
         for target in self.targets:
             if not target.alive:
                 self._remove_target(target)
+                self._logger.info('remove target: %s', target)

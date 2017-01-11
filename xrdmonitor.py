@@ -26,7 +26,7 @@ CLI.add_argument(
 if __name__ == '__main__':
     options = CLI.parse_args()
     logging.basicConfig()
-    log_level = options.pop('log_level')
+    log_level = options.log_level
     try:
         log_level = int(log_level)
     except ValueError:

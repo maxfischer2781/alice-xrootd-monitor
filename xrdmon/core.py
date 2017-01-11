@@ -37,6 +37,7 @@ class Core(object):
                     backend.digest_report(report)
                 update_delta = time.time() - self._last_update
                 if update_delta > self.update_interval:
+                    self._logger.info('running update: delta=%s', update_delta)
                     for backend in self.backends:
                         backend.update(delta=update_delta)
                     self._last_update += (update_delta // self.update_interval) * self.update_interval

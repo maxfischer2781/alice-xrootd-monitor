@@ -23,7 +23,7 @@ class FileBackend(object):
 
     def digest_report(self, report):
         """Digest a report"""
-        self._write_data(*sorted(report.items))
+        self._write_data(*sorted(report.items()))
 
     def insert_target(self, target):
         """Insert a new target for data extraction"""

@@ -14,6 +14,8 @@ class Core(object):
     :type report_port: int
     :param backends: backends which process reports and other information
     :type backends: list[xrdmon.backend.filepath.FileBackend]
+    :param update_interval: how long to wait between updates in seconds
+    :type update_interval: float or int
     """
     def __init__(self, report_port, backends=None, update_interval=60):
         self.report_port = report_port

@@ -34,7 +34,7 @@ class XrdDaemonTarget(object):
             raise ValueError('report without "pgm" identifier for flavour')
         for scls in cls.__subclasses__():
             if scls.flavour == report["pgm"]:
-                if scls.from_report is cls.from_report:
+                if scls.from_report.__func__ is cls.from_report.__func__:
                     return scls(
                         name=report["ins"],
                         version=report["ver"],

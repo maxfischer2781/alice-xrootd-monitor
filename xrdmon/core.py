@@ -18,7 +18,7 @@ class Core(object):
     def __init__(self, report_port, backends=None, update_interval=60):
         self.report_port = report_port
         self.update_interval = update_interval
-        self._last_update = time.time() - self.update_interval
+        self._next_update = time.time()
         self.backends = backends if backends is not None else []
         self._logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
@@ -35,12 +35,13 @@ class Core(object):
             for report in report_stream:
                 for backend in self.backends:
                     backend.digest_report(report)
-                update_delta = time.time() - self._last_update
-                if update_delta > self.update_interval:
-                    self._logger.info('running update: delta=%s', update_delta)
+                if time.time() > self._next_update:
+                    self._logger.info('running update: %s', time.time())
                     for backend in self.backends:
-                        backend.update(delta=update_delta)
-                    self._last_update += (update_delta // self.update_interval) * self.update_interval
+                        backend.update()
+                    self._next_update += ((
+                                              time.time() - self._next_update // self.update_interval
+                                          ) + 1) * self.update_interval
 
     def remove_target_callback(self, target):
         """Callback for target removal, forwarding to backends"""

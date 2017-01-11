@@ -1,4 +1,5 @@
 from __future__ import division, absolute_import
+import time
 
 from .. import targets
 
@@ -10,6 +11,7 @@ class FileBackend(object):
     def __init__(self, file_path):
         self.file_path = file_path
         self._data_servers = set()
+        self._last_update = time.time()
 
     @staticmethod
     def _format_message(*keyvalues):
@@ -51,9 +53,10 @@ class FileBackend(object):
         if isinstance(target, targets.XRootDTarget):
             self._data_servers.discard(target)
 
-    def update(self, delta):
+    def update(self):
         """Run an update to get/commit information"""
-        content = [('update', delta)]
+        now = time.time()
+        content = [('update', now - self._last_update)]
         for server in self._data_servers:
             content.append(('name', server.name))
             content.extend(
@@ -62,3 +65,4 @@ class FileBackend(object):
                 )
             )
         self._write_data(*content)
+        self._last_update = now

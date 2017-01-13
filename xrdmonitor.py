@@ -3,8 +3,8 @@ import argparse
 import os
 import logging
 
-from xrdmon import core
-from xrdmon.backend import filepath
+from xrdmonlib import core
+from xrdmonlib.backend import filepath
 
 CLI = argparse.ArgumentParser('XRootD Monitor')
 CLI.add_argument(
@@ -31,7 +31,7 @@ if __name__ == '__main__':
         log_level = int(log_level)
     except ValueError:
         log_level = getattr(logging, log_level.upper())
-    APP_LOGGER = logging.getLogger(os.path.basename('xrdmon'))
+    APP_LOGGER = logging.getLogger(os.path.basename('xrdmonlib'))
     APP_LOGGER.setLevel(log_level)
     APP_LOGGER.info('report_port=%s, file_path=%s', options.report_port, options.file_path)
     main = core.Core(

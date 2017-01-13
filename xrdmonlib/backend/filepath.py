@@ -6,7 +6,10 @@ from .. import targets
 
 class FileBackend(object):
     """
-    Backend writing to files
+    Writes to files in plain format
+
+    :param file_path: absolute path to write message to
+    :type file_path: str
     """
     def __init__(self, file_path):
         self.file_path = file_path
@@ -66,3 +69,20 @@ class FileBackend(object):
             )
         self._write_data(*content)
         self._last_update = now
+
+
+class CGIFileBackend(object):
+    """
+    Writes to files in short, CGI format
+
+    :param file_path: absolute path to write message to
+    :type file_path: str
+    """
+    def __init__(self, file_path):
+        self.file_path = file_path
+        self._data_servers = set()
+        self._last_update = time.time()
+
+    @staticmethod
+    def _format_message(*keyvalues):
+        return '&'.join('%s=%s' % (key, value) for key, value in keyvalues) + '\n'

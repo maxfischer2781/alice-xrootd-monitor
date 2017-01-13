@@ -1,0 +1,15 @@
+#!/usr/bin/python
+import argparse
+from xrdmonlib import config
+from xrdmonlib import backend
+
+
+BACKEND_NICKS = backend.backend_map
+
+CLI = argparse.ArgumentParser('Monitor Multiplexer for XRootD nodes')
+CLI.add_argument('CONFIG', help='Configuration file in YAML format to use')
+CLI.add_argument('--help-config', backend_nicks=BACKEND_NICKS, action=config.ArgparseConfigHelp)
+
+if __name__ == '__main__':
+    options = CLI.parse_args()
+    core = config.YamlConfig(options.config)

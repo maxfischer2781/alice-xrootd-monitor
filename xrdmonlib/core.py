@@ -8,16 +8,16 @@ from . import targetprovider
 
 class Core(object):
     """
-    Main data chain, collecting reports and managing backends
+    Collects reports, identifies monitoring targets, and sends data via backends
 
     :param report_port: the port on which to listen for xrootd reports
     :type report_port: int
-    :param backends: backends which process reports and other information
-    :type backends: list[xrdmon.backend.filepath.FileBackend]
     :param update_interval: how long to wait between updates in seconds
     :type update_interval: float or int
+    :param backends: backends which process reports and other information
+    :type backends: list[xrdmon.backend.filepath.FileBackend]
     """
-    def __init__(self, report_port, backends=None, update_interval=60):
+    def __init__(self, report_port, update_interval=60, backends=None):
         self.report_port = report_port
         self.update_interval = update_interval
         self._next_update = time.time()

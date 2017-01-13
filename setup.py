@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 repo_base_dir = os.path.abspath(os.path.dirname(__file__))
 # pull in the packages metadata
 package_about = {}
-with open(os.path.join(repo_base_dir, "xrdmon", "__about__.py")) as about_file:
+with open(os.path.join(repo_base_dir, "xrdmonlib", "__about__.py")) as about_file:
     exec(about_file.read(), package_about)
 
 if __name__ == '__main__':
@@ -20,5 +20,5 @@ if __name__ == '__main__':
         # dependencies
         # TODO: switch this to a pypi source once available
         dependency_links=['http://monalisa.caltech.edu/download/apmon/ApMon_py_2.20.tgz#egg=apmon-2.2.20'],
-        install_requires=['apmon'],
+        install_requires=['apmon', 'PyYAML'],
     )

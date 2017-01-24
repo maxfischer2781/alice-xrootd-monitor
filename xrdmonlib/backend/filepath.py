@@ -1,20 +1,18 @@
 from __future__ import division, absolute_import
-import time
 
-from .. import targets
+from . import base
 
 
-class FileBackend(object):
+class FileBackend(base.ChainElement):
     """
-    Writes to files in plain format
+    Writes to files in plain `key=value` format
 
     :param file_path: absolute path to write message to
     :type file_path: str
     """
     def __init__(self, file_path):
+        super(FileBackend, self).__init__()
         self.file_path = file_path
-        self._data_servers = set()
-        self._last_update = time.time()
 
     @staticmethod
     def _format_message(*keyvalues):
@@ -26,63 +24,23 @@ class FileBackend(object):
             output_file.write(message)
             output_file.flush()
 
-    def digest_report(self, report):
-        """Digest a report"""
-        self._write_data(*sorted(report.items()))
+    def send(self, value=None):
+        """
+        Digest a report
 
-    def insert_target(self, target):
-        """Insert a new target for data extraction"""
-        if isinstance(target, targets.XrdDaemonTarget):
-            self._write_data(
-                ('target', 'insert'),
-                ('name', target.name),
-                ('flavour', target.flavour),
-                ('pid', target.pid),
-                ('port', target.port),
-            )
-        if isinstance(target, targets.XRootDTarget):
-            self._data_servers.add(target)
-
-    def remove_target(self, target):
-        """Remove an existing target from data extraction"""
-        if isinstance(target, targets.XrdDaemonTarget):
-            self._write_data(
-                ('target', 'remove'),
-                ('name', target.name),
-                ('flavour', target.flavour),
-                ('pid', target.pid),
-                ('port', target.port),
-            )
-        if isinstance(target, targets.XRootDTarget):
-            self._data_servers.discard(target)
-
-    def update(self):
-        """Run an update to get/commit information"""
-        now = time.time()
-        content = [('update', now - self._last_update)]
-        for server in self._data_servers:
-            content.append(('name', server.name))
-            content.extend(
-                (server.name + attr, getattr(server, attr)) for attr in (
-                    'space_total', 'space_free', 'space_largestfreechunk'
-                )
-            )
-        self._write_data(*content)
-        self._last_update = now
+        :param value: an xrootd report to digest
+        :type value: dict
+        """
+        self._write_data(*sorted(value.items()))
 
 
-class CGIFileBackend(object):
+class CGIFileBackend(FileBackend):
     """
     Writes to files in short, CGI format
 
     :param file_path: absolute path to write message to
     :type file_path: str
     """
-    def __init__(self, file_path):
-        self.file_path = file_path
-        self._data_servers = set()
-        self._last_update = time.time()
-
     @staticmethod
     def _format_message(*keyvalues):
         return '&'.join('%s=%s' % (key, value) for key, value in keyvalues) + '\n'

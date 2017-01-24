@@ -24,3 +24,9 @@ Simply run
 or check out this repository and run
 
     python setup.py install
+
+# Notice
+
+    This packages includes a backport of the runpy python module (http://www.python.org)
+    Copyright (C) 2001-2016 Python Software Foundation.
+    Licensed under the Python Software Foundation License.

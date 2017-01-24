@@ -8,6 +8,7 @@ from . import core
 
 
 class ConfigError(BaseException):
+    """Incorrect Configuration Content"""
     pass
 
 
@@ -23,23 +24,31 @@ class YamlConfig(object):
 
     def parse_path(self, path):
         raw_data = self._raw_parse_path(path)
+        if not isinstance(raw_data, dict):
+            raise ConfigError("configuration top-level must be a mapping")
         core_kwargs = self._make_corekwargs(raw_data)
         return core.Core(**core_kwargs)
 
-    def _raw_parse_path(self, path):
+    @staticmethod
+    def _raw_parse_path(path):
         with open(path) as yaml_config:
             raw_data = yaml.parse(yaml_config)
         return raw_data
 
     def _make_corekwargs(self, raw_data):
         kwargs = raw_data.copy()
-        kwargs.pop('backends')
+        try:
+            kwargs.pop('backends')
+        except KeyError:
+            raise ConfigError('configuration requires "backends" to be defined')
         kwargs['backends'] = self._make_backends(raw_data)
         return kwargs
 
     def _make_backends(self, raw_data):
         """Create all backends"""
         backend_dicts = raw_data.pop('backends', [])
+        if isinstance(backend_dicts, dict):
+            backend_dicts = [backend_dicts]
         return [self._instantiate_backend(cls_dict) for cls_dict in backend_dicts]
 
     def _get_backend_class(self, cls_dict):
@@ -65,6 +74,8 @@ class YamlConfig(object):
         return cls
 
     def _instantiate_backend(self, cls_dict):
+        if not isinstance(cls_dict, dict):
+            raise ConfigError("configuration for each backend must be a mapping")
         cls = self._get_backend_class(cls_dict)
         try:
             return cls(**cls_dict)
@@ -119,7 +130,8 @@ class ArgparseConfigHelp(argparse.Action):
             'nicks': ', '.join(self.backend_nicks)
         })
 
-    def _get_corehelp(self):
+    @staticmethod
+    def _get_corehelp():
         return core.Core.__doc__
 
     def _get_backendhelp(self, identifier):

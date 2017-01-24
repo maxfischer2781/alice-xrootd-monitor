@@ -1,8 +1,0 @@
-report_port: 20333
-update_interval: 60
-backends:
-  - class: AliceApMonBackend
-    host_group: ALICE::FZK::SE
-    destinations:
-      - alice-sl6-kit.gridka.de
-  - class: Foo

@@ -102,9 +102,9 @@ class PyConfiguration(object):
         self.backends = {}
         self._logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
         for backend in map_nicknames:
-            self.map_bickname(*backend)  # expecting (nickname: str, module: str, name: str)
+            self.map_nickname(*backend)  # expecting (nickname: str, module: str, name: str)
 
-    def map_bickname(self, nickname, module, name):
+    def map_nickname(self, nickname, module, name):
         """
         Add shorthand name for objects available in configuration
         """

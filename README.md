@@ -1,8 +1,22 @@
 # XRootD Monitor
 
 Monitoring suite for XRootD servers.
-This tool collects, transforms and generates data about a local XRootD server.
+This tool collects, transforms and generates report data about XRootD server.
 Multiple backends are available to pass on this data.
+
+# Quick Guide
+
+The `xrdmon` expects xrootd to send monitoring reports to a fixed, local port.
+These reports are multiplexed and can be sent to various consumers.
+To start the monitor, simply run it with a configuration file path:
+
+    xrdmon /path/to/config.cfg
+
+A standard configuration file must specify the `port` to listen on, and redirect the `reports` to consumers.
+
+    port = 20333
+    reports >> LogFile("/tmp/xrdmon.log")
+    reports >> AliceMon('ALICE::EXAMPLE::SE', 'localhost:8560')
 
 # About
 

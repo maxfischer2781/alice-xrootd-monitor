@@ -30,7 +30,7 @@ The following example removes all keys starting with `"buff"` from reports befor
     reports >> Filter(r"^buff\..*") >> LogFile("/tmp/xrdmon.log")
 
 Forking Streams
-===============
+---------------
 
 A major use case for report stream redirection in `xrdmonlib` is forking.
 At each element of a report chain, the stream can be forked to multiple children.
@@ -43,7 +43,9 @@ This is expressed by redirection to a `tuple` of consumers.
     reports >> (LogFile("/tmp/xrdmon.log"), CGIFile("/tmp/xrdmon.cgi"))
 
 Note that a consumer can be yet another chain.
-This can be used to apply filters to some output.
+For example, this can be used to apply filters to only some output.
+
+.. code:: python
 
     reports >> (LogFile("/tmp/xrdmon.log"), Filter(r"^buff\..*") >> LogFile("/tmp/xrdmon_short.log"))
 
@@ -55,11 +57,10 @@ The following example gives the same result as the previous one.
     reports >> LogFile("/tmp/xrdmon.log")
     reports >> Filter(r"^buff\..*") >> LogFile("/tmp/xrdmon_short.log"))
 
-.. note::
-   While streams can be forked, they *cannot be joined* at the moment.
+:note: While streams can be forked, they *cannot be joined* at the moment.
 
 Default Elements
-================
+----------------
 
 A number of report chain elements are available by default.
 These map to Python classes, which define their parameters.
@@ -67,7 +68,7 @@ These map to Python classes, which define their parameters.
 .. autogenerate these?
 
 Configuration File Syntax and Capabilities
-------------------------------------------
+==========================================
 
 The configuration file is actually a valid Python file and executed as such.
 You can make use of the full Python syntax, including comments and scoping.
@@ -81,8 +82,43 @@ You can make use of the full Python syntax, including comments and scoping.
         Filter(r"^buff\..*") >> LogFile("/tmp/xrdmon_short.log")
     )
 
-Furthermore, this allows to easily plug in extensions if needed.
+:warning: The configuration file is executed with all permissions of the current user.
+          You should ensure that it is *not writeable* to any untrusted users.
 
-.. warning::
-   The configuration file is executed with all permissions of the current user.
-   You should ensure that it is *not writeable* to any untrusted users.
+Logging Setup
+-------------
+
+All debug logging by `xrdmonlib` uses the default :py:mod:`logging` module.
+To change logging, simply import the module and configure it to your needs.
+
+.. code:: python
+
+    import logging.handlers
+    logging.getLogger('xrdmonlib').addHandler(logging.handlers.SysLogHandler())
+
+See the :py:mod:`logging` documentation for possible options
+(`Python2 <https://docs.python.org/2/library/logging.html>`_ and `Python3 <https://docs.python.org/3/library/logging.html>`_).
+
+Custom Chain Elements
+---------------------
+
+As the configuration is Python, one can easily plug in extensions if needed.
+
+.. code:: python
+
+    import time
+    from xrdmonlib.backend.base import ChainElement
+
+    # custom chain element
+    class Timestamper(object):
+        def send(self, value=None):
+            """
+            Digest a report, adding a timestamp
+
+            :param value: an xrootd report to digest
+            :type value: dict
+            """
+            report['tme'] = time.time()
+            super(TimestampElement, self).send(report)
+
+    reports >> Timestamper() >> LogFile("/tmp/xrdmon_short.log"))

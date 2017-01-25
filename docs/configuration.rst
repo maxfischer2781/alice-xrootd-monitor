@@ -1,8 +1,8 @@
 Configuration
 #############
 
-When using `xrdmonlib` via `xrdmon`, the service is configured using the convention of :py:mod:`xrdmonlib.interface`.
-The single required argument to  `xrdmon` is the path to a configuration file.
+When using ``xrdmonlib`` via ``xrdmon``, the service is configured using the convention of :py:mod:`xrdmonlib.interface`.
+The single required argument to  ``xrdmon`` is the path to a configuration file.
 
 A simple example is below.
 It sets the port to listen for xrootd reports and redirects them to a log file.
@@ -18,12 +18,12 @@ Redirection Chains
 Processing of reports is based on redirecting the report stream through a chain.
 Each element can inspect, transform and digest reports.
 
-Elements are connected using the `>>` operator.
+Elements are connected using the ``>>`` operator.
 The report stream flows in only one direction:
-given the link `source >> consumer`, changes made by `source` are visible to `consumer` but *not* vice versa.
+given the link ``source >> consumer``, changes made by ``source`` are visible to ``consumer`` but *not* vice versa.
 
 A common use case is to remove unneeded elements from reports.
-The following example removes all keys starting with `"buff"` from reports before they are written to disk.
+The following example removes all keys starting with ``"buff"`` from reports before they are written to disk.
 
 .. code:: python
 
@@ -32,11 +32,11 @@ The following example removes all keys starting with `"buff"` from reports befor
 Forking Streams
 ---------------
 
-A major use case for report stream redirection in `xrdmonlib` is forking.
+A major use case for report stream redirection in ``xrdmonlib`` is forking.
 At each element of a report chain, the stream can be forked to multiple children.
 
 The simplest way to fork a stream is to redirect it directly to multiple consumers.
-This is expressed by redirection to a `tuple` of consumers.
+This is expressed by redirection to a ``tuple`` of consumers.
 
 .. code:: python
 
@@ -88,7 +88,7 @@ You can make use of the full Python syntax, including comments and scoping.
 Logging Setup
 -------------
 
-All debug logging by `xrdmonlib` uses the default :py:mod:`logging` module.
+All debug logging by ``xrdmonlib`` uses the default :py:mod:`logging` module.
 To change logging, simply import the module and configure it to your needs.
 
 .. code:: python

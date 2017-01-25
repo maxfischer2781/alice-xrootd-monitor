@@ -4,6 +4,7 @@ import sys
 import argparse
 import logging.handlers
 import textwrap
+import platform
 
 from . import core
 from . import compat
@@ -114,21 +115,22 @@ class PyConfiguration(object):
             for sname in name.split('.'):
                 cls = getattr(cls, sname)
         except ImportError as err:
-            self._logger.info('Failed to load backend module %s: %s' % (module, err))
+            self._logger.info('failed to load backend module %s: %s' % (module, err))
         except NameError as err:
-            self._logger.info('Failed to load backend object %s.%s: %s' % (module, name, err))
+            self._logger.info('failed to load backend object %s.%s: %s' % (module, name, err))
         else:
             self.backends[nickname] = cls
-            self._logger.debug('Added config nickname %s => %s.%s', nickname, cls.__module__, cls.__name__)
+            self._logger.debug('added config nickname %s => %s.%s', nickname, cls.__module__, cls.__name__)
 
     def configure_core(self, config_path):
         """Initialize a :py:class:`~.core.Core` from a configuration file"""
-        self._logger.info('Using config nicknames %s', ', '.join(self.backends))
+        self._logger.info('configuration interpreter: %s %s', platform.python_implementation(), platform.python_version())
+        self._logger.info('using config nicknames %s', ', '.join(self.backends))
         # namespace available in the config file
         config_namespace = self.backends.copy()
         config_namespace['reports'] = ChainStart('ReportStream')
         config_namespace['logging'] = logging
-        self._logger.info('Running configuration file %r', config_path)
+        self._logger.info('running configuration file %r', config_path)
         config_dict = compat.run_path(
             config_path,
             init_globals=config_namespace,

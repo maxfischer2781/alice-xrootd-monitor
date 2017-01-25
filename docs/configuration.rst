@@ -7,6 +7,8 @@ The single required argument to  `xrdmon` is the path to a configuration file.
 A simple example is below.
 It sets the port to listen for xrootd reports and redirects them to a log file.
 
+.. code:: python
+
     port = 12345
     reports >> LogFile("/tmp/xrdmon.log")
 
@@ -23,6 +25,8 @@ given the link `source >> consumer`, changes made by `source` are visible to `co
 A common use case is to remove unneeded elements from reports.
 The following example removes all keys starting with `"buff"` from reports before they are written to disk.
 
+.. code:: python
+
     reports >> Filter(r"^buff\..*") >> LogFile("/tmp/xrdmon.log")
 
 Forking Streams
@@ -34,6 +38,8 @@ At each element of a report chain, the stream can be forked to multiple children
 The simplest way to fork a stream is to redirect it directly to multiple consumers.
 This is expressed by redirection to a `tuple` of consumers.
 
+.. code:: python
+
     reports >> (LogFile("/tmp/xrdmon.log"), CGIFile("/tmp/xrdmon.cgi"))
 
 Note that a consumer can be yet another chain.
@@ -43,6 +49,8 @@ This can be used to apply filters to some output.
 
 Alternatively, you can redirect from one element multiple times.
 The following example gives the same result as the previous one.
+
+.. code:: python
 
     reports >> LogFile("/tmp/xrdmon.log")
     reports >> Filter(r"^buff\..*") >> LogFile("/tmp/xrdmon_short.log"))
@@ -63,6 +71,8 @@ Configuration File Syntax and Capabilities
 
 The configuration file is actually a valid Python file and executed as such.
 You can make use of the full Python syntax, including comments and scoping.
+
+.. code:: python
 
     reports >> (
         # verbose log

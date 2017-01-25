@@ -8,12 +8,14 @@ import platform
 
 from . import core
 from . import compat
+from . import utils
 from .backend.base import ChainStart
 
 
 class ArgparseConfigHelp(argparse.Action):
     """Print help on configuration via argparse"""
     def __init__(self, *args, **kwargs):
+        self._nicknames = []
         if 'help' not in kwargs:
             kwargs['help'] = 'show the config help message and exit'
         kwargs['nargs'] = 0
@@ -22,7 +24,12 @@ class ArgparseConfigHelp(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         parser.print_usage()
         self._print_help(self._get_usehelp())
+        self._print_help(self._get_nickhelp())
         parser.exit()
+
+    def add_nicknames(self, *nickname_maps):
+        """Add nickname mappings of the form ``(nickname, module, name)``"""
+        self._nicknames.extend(nickname_maps)
 
     @staticmethod
     def _print_help(help_str):
@@ -45,10 +52,28 @@ class ArgparseConfigHelp(argparse.Action):
         already provided. The available short names are listed in debug output.
         """
 
+    def _get_nickhelp(self):
+        if self._nicknames:
+            max_nick = max(len(elem[0]) for elem in self._nicknames)
+            return 'Nicknames\n=========\n' + '\n'.join(self._format_nickmap(nick, max_nick) for nick in self._nicknames)
+        else:
+            return "No nicknames registered for help output"
+
+    @staticmethod
+    def _format_nickmap(nickmap, nick_len=0):
+        nick_fmt = "%s => %s.%s" % (nickmap[0].ljust(nick_len), nickmap[1], nickmap[2])
+        try:
+            obj = _map_import(nickmap[1], nickmap[2])
+        except (ImportError, NameError) as err:
+            nick_fmt += '\n    %s: %s' % (type(err).__name__, err)
+        else:
+            nick_fmt += '\n    ' + obj.__name__ + utils.get_signature(obj)
+        return nick_fmt + '\n'
+
 
 CLI = argparse.ArgumentParser(description='XRootD monitoring report multiplexer and logger')
 CLI.add_argument('config', help='path to configuration file', metavar='CONFIGPATH')
-CLI.add_argument('--config-help', action=ArgparseConfigHelp)
+CONFIG_HELP = CLI.add_argument('--config-help', action=ArgparseConfigHelp)
 CLI_LOG = CLI.add_argument_group(title='debug logging facilities', description='See https://docs.python.org/2/library/logging.html for meaning of values')
 CLI_LOG.add_argument('-l', '--log-level', help='logging verbosity, numeric or name', default='WARNING')
 CLI_LOG.add_argument('-f', '--log-format', help='logging message format', default='%(asctime)s (%(process)d) %(levelname)8s: %(message)s')
@@ -92,6 +117,16 @@ def cli_log_config(log_level, log_format, destinations, **_):
     logging.getLogger().handlers[:] = root_handlers
 
 
+def _map_import(module, name):
+    """Import objects for mapping"""
+    __import__(module)
+    module = sys.modules[module]
+    cls = module
+    for sname in name.split('.'):
+        cls = getattr(cls, sname)
+    return cls
+
+
 class PyConfiguration(object):
     """
     Configuration file interface for Python configuration files
@@ -109,11 +144,7 @@ class PyConfiguration(object):
         Add shorthand name for objects available in configuration
         """
         try:
-            __import__(module)
-            module = sys.modules[module]
-            cls = module
-            for sname in name.split('.'):
-                cls = getattr(cls, sname)
+            cls = _map_import(module, name)
         except ImportError as err:
             self._logger.info('failed to load backend module %s: %s' % (module, err))
         except NameError as err:

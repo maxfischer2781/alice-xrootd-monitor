@@ -3,6 +3,8 @@ Various helper utilities
 """
 import os
 import ast
+import sys
+import inspect
 
 
 def validate_process(pid, name=None):
@@ -38,3 +40,33 @@ def safe_eval(literal):
         return ast.literal_eval(literal)
     except (ValueError, SyntaxError):
         return literal
+
+
+def get_signature(target):
+    """
+    Get a pretty formatted call signature, e.g. `'(bar, foo:int=3, *args, chloe=15, **kwargs)'`
+
+    :param target:
+    :return: call signature of `target`
+    :rtype: str
+    """
+    if sys.version_info > (3,):
+        return str(inspect.signature(target))
+    if hasattr(target, '__init__'):
+        target = target.__init__
+    argspec = inspect.getargspec(target)
+    signature = []
+    args = argspec.args[1:] if argspec.args and argspec.args[0] == 'self' else argspec.args
+    if argspec.defaults is None:
+        signature.extend(args)
+    else:
+        if len(args) > len(argspec.defaults):
+            signature.extend(args[:-len(argspec.defaults)])
+        signature.extend('%s=%r' % (arg, default) for arg, default in zip(
+            args[-len(argspec.defaults):], argspec.defaults)
+        )
+    if argspec.varargs:
+        signature.append('*' + argspec.varargs)
+    if argspec.keywords:
+        signature.append('**' + argspec.keywords)
+    return '(%s)' % ', '.join(signature)

@@ -18,7 +18,7 @@ class RegexFilter(base.ChainElement):
     If `blacklist` is set, any key matching it is deleted. If both are used,
     keys are only kept if they match `whitelist` and do *not* match `blacklist`.
     """
-    def __init__(self, whitelist=None, blacklist=None):
+    def __init__(self, blacklist=None, whitelist=None):
         super(RegexFilter, self).__init__()
         self._whitelist = None
         self._blacklist = None

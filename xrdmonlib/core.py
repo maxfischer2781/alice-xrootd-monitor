@@ -10,12 +10,12 @@ class Core(object):
 
     :param report_port: the port on which to listen for xrootd reports
     :type report_port: int
-    :param backends: backends which processing reports
-    :type backends: xrdmon.backend.base.ChainStart
+    :param backend_chain: chain of backends which process reports
+    :type backend_chain: xrdmon.backend.base.ChainStart
     """
-    def __init__(self, report_port, backends=None):
+    def __init__(self, report_port, backend_chain):
         self.report_port = report_port
-        self.backends = backends if backends is not None else []
+        self.backend_chain = backend_chain
         self._logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
     def run(self):
@@ -25,6 +25,5 @@ class Core(object):
         self._logger.info('starting xrdmon main loop')
         with xrdreports.XRootDReportStreamer(port=self.report_port) as report_stream:
             for report in report_stream:
-                for backend in self.backends:
-                    backend.send(report)
+                self.backend_chain.send(report)
         self._logger.info('stopping xrdmon main loop')

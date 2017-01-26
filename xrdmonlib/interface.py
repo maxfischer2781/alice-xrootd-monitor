@@ -167,7 +167,7 @@ class PyConfiguration(object):
             init_globals=config_namespace,
             run_name=os.path.basename(config_path)
         )
-        kwarg_aliases = {'report_port': ['port'], 'backends': ['reports', 'backends']}
+        kwarg_aliases = {'report_port': ['port'], 'backend_chain': ['reports', 'backends']}
         core_kwargs = {}
         for keyword, aliases in kwarg_aliases.items():
             for alias in aliases:
@@ -183,3 +183,23 @@ class PyConfiguration(object):
                 raise ValueError('missing config value: %s (aliases: %s)')
         monitor_core = core.Core(**core_kwargs)
         return monitor_core
+
+
+# Default __main__
+def app_main():
+    """XrdMon executable main function"""
+    # TODO: import this from backends
+    nicks = (
+        ('AliceMon', 'xrdmonlib.backend.apmon', 'AliceApMonBackend'),
+        ('LogFile', 'xrdmonlib.backend.filepath', 'FileBackend'),
+        ('CGIFile', 'xrdmonlib.backend.filepath', 'CGIFileBackend'),
+        ('Filter', 'xrdmonlib.backend.transform', 'RegexFilter'),
+        ('Rename', 'xrdmonlib.backend.transform', 'FormatTransform'),
+    )
+    CONFIG_HELP.add_nicknames(*nicks)
+    options = CLI.parse_args()
+    cli_log_config(**vars(options))
+    config_interface = PyConfiguration(*nicks)
+    monitor_core = config_interface.configure_core(options.config)
+    monitor_core.run()
+    return 0

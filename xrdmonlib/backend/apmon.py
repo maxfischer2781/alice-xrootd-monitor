@@ -10,7 +10,14 @@ from .. import compat
 
 class ApMonLogger(object):
     """
-    Replacement for ApMon `Logger.Logger` class to use regular `logging`
+    Replacement for ApMon `Logger.Logger` class to use default python logging
+
+    :param defaultLevel: ignored, available for signature compatibility only
+
+    Redirects ApMon logging calls messages using the standard :py:mod:`logging`
+    utilities. This is intended for compatibility with backend code, mainly
+    ApMon itself. If you wish to change ApMon logging settings, directly modify
+    the logger `"xrdmonlib.ApMonLogger"`.
     """
     #: log levels as used by ApMon Logger
     apmon_levels = ('FATAL', 'ERROR', 'WARNING', 'INFO', 'NOTICE', 'DEBUG')
@@ -20,7 +27,7 @@ class ApMonLogger(object):
         1: logging.ERROR,
         2: logging.WARNING,
         3: logging.INFO,
-        4: logging.INFO,
+        4: logging.DEBUG,
         5: logging.DEBUG,
     }
 

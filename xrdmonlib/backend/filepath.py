@@ -1,9 +1,9 @@
 from __future__ import division, absolute_import
 
-from . import base
+from .. import chain_element
 
 
-class FileBackend(base.ChainElement):
+class FileBackend(chain_element.ChainElement):
     """
     Writes to files in plain `key=value` format
 

@@ -1,15 +1,16 @@
 from __future__ import division, absolute_import
-import os
-import sys
+
 import argparse
 import logging.handlers
-import textwrap
+import os
 import platform
+import sys
+import textwrap
 
-from . import core
+from xrdmonlib.chain_element import ChainStart
 from . import compat
+from . import core
 from . import utils
-from .backend.base import ChainStart
 
 
 class ArgparseConfigHelp(argparse.Action):

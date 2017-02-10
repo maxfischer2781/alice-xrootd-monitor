@@ -24,7 +24,7 @@ if __name__ == '__main__':
             ],
         },
         # dependencies
-        install_requires=['apmon'],
+        install_requires=['apmon', 'chainlet'],
         # metadata for package seach
         classifiers=[
             'Development Status :: 5 - Production/Stable',

@@ -1,11 +1,11 @@
 from __future__ import division, absolute_import
-import socket
+
 import logging
+import socket
 
 import apmon
 
-from . import base
-from .. import compat
+from .. import compat, chain_element
 
 
 class ApMonLogger(object):
@@ -48,7 +48,7 @@ for _level, _name in enumerate(ApMonLogger.apmon_levels):
     setattr(ApMonLogger, _name, _level)
 
 
-class AliceApMonBackend(base.ChainElement):
+class AliceApMonBackend(chain_element.ChainElement):
     """
     Backend for ApMon client to MonALISA Monitoring
 

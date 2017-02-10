@@ -103,14 +103,15 @@ Custom Chain Elements
 ---------------------
 
 As the configuration is Python, one can easily plug in extensions if needed.
+Elements of the report chain simply receive a ``dict`` via their :py:meth:`send` method.
 
 .. code:: python
 
     import time
-    from xrdmonlib.backend.base import ChainElement
+    from xrdmonlib.chain_element import ChainElement
 
     # custom chain element
-    class Timestamper(object):
+    class Timestamper(ChainElement):
         def send(self, value=None):
             """
             Digest a report, adding a timestamp

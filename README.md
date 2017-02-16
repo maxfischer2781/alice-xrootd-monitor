@@ -14,30 +14,31 @@ To start the monitor, simply run it with a configuration file path:
 
 A standard configuration file must specify the `port` to listen on, and redirect the `reports` to consumers.
 
-    port = 20333
-    reports >> LogFile("/tmp/xrdmon.log")
-    reports >> AliceMon('ALICE::EXAMPLE::SE', 'localhost:8560')
-
-# About
-
-At the moment, the repository is public for reference only.
-It is under development and testing at FZK.
-
-This suite was initially written for XRootD servers of the ALICE collaboration.
-Monitoring is the *only* ALICE-specific functionality that is not feasible to provide via service management tools.
-If you just want to deploy an XRootD service for ALICE, use [Adrian's alicexrd tools](https://github.com/adriansev/alicexrd).
+    core << Reports(10333)
+    core >> LogFile("/tmp/xrdmon.log")
+    core >> AliceMon('ALICE::EXAMPLE::SE', 'localhost:8560')
 
 # Installation
 
 The suite can be installed using standard Python package manager `pip` or from source.
 
-Simply run
+To install the latest release, simply run:
 
     pip install xrdmon
 
-or check out this repository and run
+To install the lastest development version, checkout the repository and run:
 
     python setup.py install
+
+# About
+
+At the moment, the repository is public for reference only.
+It is under development and testing at FZK.
+Please see the [github repository](https://github.com/maxfischer2781/xrdmon) for status and open tickets.
+
+This suite was initially written for XRootD servers of the ALICE collaboration.
+Monitoring is the *only* ALICE-specific functionality that is not feasible to provide via service management tools.
+If you just want to deploy an XRootD service for ALICE, use [Adrian's alicexrd tools](https://github.com/adriansev/alicexrd).
 
 # Notice
 

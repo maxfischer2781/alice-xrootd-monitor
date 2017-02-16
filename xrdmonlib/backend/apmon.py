@@ -4,8 +4,9 @@ import logging
 import socket
 
 import apmon
+import chainlet
 
-from .. import compat, chain_element
+from .. import compat
 
 
 class ApMonLogger(object):
@@ -48,7 +49,7 @@ for _level, _name in enumerate(ApMonLogger.apmon_levels):
     setattr(ApMonLogger, _name, _level)
 
 
-class AliceApMonBackend(chain_element.ChainElement):
+class AliceApMonBackend(chainlet.ChainLink):
     """
     Backend for ApMon client to MonALISA Monitoring
 

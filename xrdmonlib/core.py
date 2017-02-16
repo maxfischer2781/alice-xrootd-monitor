@@ -1,29 +1,16 @@
 from __future__ import division, absolute_import
 import logging
 
-from . import xrdreports
+import chainlet.driver
 
 
-class Core(object):
-    """
-    Main report chain, collects reports and sends data via backends
-
-    :param report_port: the port on which to listen for xrootd reports
-    :type report_port: int
-    :param backend_chain: chain of backends which process reports
-    :type backend_chain: xrdmon.backend.base.ChainStart
-    """
-    def __init__(self, report_port, backend_chain):
-        self.report_port = report_port
-        self.backend_chain = backend_chain
+class Core(chainlet.driver.ThreadedChainDriver):
+    def __init__(self):
+        super(Core, self).__init__()
         self._logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
     def run(self):
-        """
-        The main loop, collecting reports and triggering backends
-        """
-        self._logger.info('starting xrdmon main loop')
-        with xrdreports.XRootDReportStreamer(port=self.report_port) as report_stream:
-            for report in report_stream:
-                self.backend_chain.send(report)
-        self._logger.info('stopping xrdmon main loop')
+        self._logger.info('Streaming reports from %d source(s) to %d chain(s)', len(self._parents), len(self._children))
+        self._logger.info('starting %s main loop', self.__class__.__name__)
+        super(Core, self).run()
+        self._logger.info('stopping %s main loop', self.__class__.__name__)

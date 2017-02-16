@@ -2,10 +2,10 @@ from __future__ import division, absolute_import
 
 import re
 
-from .. import chain_element
+import chainlet
 
 
-class RegexFilter(chain_element.ChainElement):
+class RegexFilter(chainlet.ChainLink):
     """
     Filter report keys according to a regular expression
 
@@ -94,7 +94,7 @@ class RegexFilter(chain_element.ChainElement):
         ))
 
 
-class FormatTransform(chain_element.ChainElement):
+class FormatTransform(chainlet.ChainLink):
     """
     Transform report keys according to a format string
 

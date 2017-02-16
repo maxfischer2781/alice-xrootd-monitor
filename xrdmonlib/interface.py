@@ -7,7 +7,6 @@ import platform
 import sys
 import textwrap
 
-from xrdmonlib.chain_element import ChainStart
 from . import compat
 from . import core
 from . import utils
@@ -160,7 +159,7 @@ class PyConfiguration(object):
         self._logger.info('using config nicknames %s', ', '.join(self.backends))
         # namespace available in the config file
         config_namespace = self.backends.copy()
-        config_namespace['reports'] = ChainStart('ReportStream')
+        config_namespace['core'] = core.Core()
         config_namespace['logging'] = logging
         self._logger.info('running configuration file %r', config_path)
         config_dict = compat.run_path(
@@ -168,22 +167,7 @@ class PyConfiguration(object):
             init_globals=config_namespace,
             run_name=os.path.basename(config_path)
         )
-        kwarg_aliases = {'report_port': ['port'], 'backend_chain': ['reports', 'backends']}
-        core_kwargs = {}
-        for keyword, aliases in kwarg_aliases.items():
-            for alias in aliases:
-                try:
-                    value = config_dict[alias]
-                except KeyError:
-                    continue
-                else:
-                    core_kwargs[keyword] = value
-                    self._logger.info('configuration: %s => %r', keyword, value)
-                    break
-            else:
-                raise ValueError('missing config value: %s (aliases: %s)')
-        monitor_core = core.Core(**core_kwargs)
-        return monitor_core
+        return config_dict['core']
 
 
 # Default __main__
@@ -196,6 +180,7 @@ def app_main():
         ('CGIFile', 'xrdmonlib.backend.filepath', 'CGIFileBackend'),
         ('Filter', 'xrdmonlib.backend.transform', 'RegexFilter'),
         ('Rename', 'xrdmonlib.backend.transform', 'FormatTransform'),
+        ('Reports', 'xrdmonlib.xrdreports', 'XRootDReportStreamer'),
     )
     CONFIG_HELP.add_nicknames(*nicks)
     options = CLI.parse_args()

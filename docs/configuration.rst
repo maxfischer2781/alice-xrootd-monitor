@@ -9,8 +9,8 @@ It sets the port to listen for xrootd reports and redirects them to a log file.
 
 .. code:: python
 
-    port = 12345
-    reports >> LogFile("/tmp/xrdmon.log")
+    core << Reports(10333)
+    core >> LogFile("/tmp/xrdmon.log")
 
 Redirection Chains
 ==================
@@ -27,7 +27,7 @@ The following example removes all keys starting with ``"buff"`` from reports bef
 
 .. code:: python
 
-    reports >> Filter(r"^buff\..*") >> LogFile("/tmp/xrdmon.log")
+    core >> Filter(r"^buff\..*") >> LogFile("/tmp/xrdmon.log")
 
 Forking Streams
 ---------------
@@ -40,24 +40,22 @@ This is expressed by redirection to a ``tuple`` of consumers.
 
 .. code:: python
 
-    reports >> (LogFile("/tmp/xrdmon.log"), CGIFile("/tmp/xrdmon.cgi"))
+    core >> (LogFile("/tmp/xrdmon.log"), CGIFile("/tmp/xrdmon.cgi"))
 
 Note that a consumer can be yet another chain.
 For example, this can be used to apply filters to only some output.
 
 .. code:: python
 
-    reports >> (LogFile("/tmp/xrdmon.log"), Filter(r"^buff\..*") >> LogFile("/tmp/xrdmon_short.log"))
+    core >> (LogFile("/tmp/xrdmon.log"), Filter(r"^buff\..*") >> LogFile("/tmp/xrdmon_short.log"))
 
 Alternatively, you can redirect from one element multiple times.
 The following example gives the same result as the previous one.
 
 .. code:: python
 
-    reports >> LogFile("/tmp/xrdmon.log")
-    reports >> Filter(r"^buff\..*") >> LogFile("/tmp/xrdmon_short.log"))
-
-:note: While streams can be forked, they *cannot be joined* at the moment.
+    core >> LogFile("/tmp/xrdmon.log")
+    core >> Filter(r"^buff\..*") >> LogFile("/tmp/xrdmon_short.log"))
 
 Default Elements
 ----------------
@@ -75,7 +73,7 @@ You can make use of the full Python syntax, including comments and scoping.
 
 .. code:: python
 
-    reports >> (
+    core >> (
         # verbose log
         LogFile("/tmp/xrdmon.log"),
         # long running, filtered log
@@ -103,15 +101,16 @@ Custom Chain Elements
 ---------------------
 
 As the configuration is Python, one can easily plug in extensions if needed.
-Elements of the report chain simply receive a ``dict`` via their :py:meth:`send` method.
+Elements of the report chain are implemented using :py:mod:`chainlet`.
+Each simply receives a ``dict`` via their :py:meth:`send` method.
 
 .. code:: python
 
     import time
-    from xrdmonlib.chain_element import ChainElement
+    from chainlet import ChainLink
 
     # custom chain element
-    class Timestamper(ChainElement):
+    class Timestamper(ChainLink):
         def send(self, value=None):
             """
             Digest a report, adding a timestamp
@@ -122,4 +121,4 @@ Elements of the report chain simply receive a ``dict`` via their :py:meth:`send`
             report['tme'] = time.time()
             super(TimestampElement, self).send(report)
 
-    reports >> Timestamper() >> LogFile("/tmp/xrdmon_short.log"))
+    core >> Timestamper() >> LogFile("/tmp/xrdmon_short.log"))

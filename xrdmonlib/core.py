@@ -5,11 +5,17 @@ import chainlet.driver
 
 
 class Core(chainlet.driver.ThreadedChainDriver):
+    """
+    Main report chain, collects reports and sends data via backends
+    """
     def __init__(self):
         super(Core, self).__init__()
         self._logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
 
     def run(self):
+        """
+        Collect and pass on reports
+        """
         self._logger.info('Streaming reports from %d source(s) to %d chain(s)', len(self._parents), len(self._children))
         self._logger.info('starting %s main loop', self.__class__.__name__)
         super(Core, self).run()

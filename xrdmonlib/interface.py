@@ -181,6 +181,7 @@ def app_main():
         ('Filter', 'xrdmonlib.backend.transform', 'RegexFilter'),
         ('Rename', 'xrdmonlib.backend.transform', 'FormatTransform'),
         ('Reports', 'xrdmonlib.xrdreports', 'XRootDReportStreamer'),
+        ('Debug', 'xrdmonlib.backend.logger', 'debug'),
     )
     CONFIG_HELP.add_nicknames(*nicks)
     options = CLI.parse_args()

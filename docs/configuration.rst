@@ -9,13 +9,13 @@ It sets the port to listen for xrootd reports and redirects them to a log file.
 
 .. code:: python
 
-    core << Reports(10333)
-    core >> LogFile("/tmp/xrdmon.log")
+    core.mount(XrdReports(10333) >> LogFile("/tmp/xrdmon.log"))
 
 Redirection Chains
 ==================
 
-Processing of reports is based on redirecting the report stream through a chain.
+Processing of reports is based on redirecting the report stream through a chain [#chains]_.
+At each step, the chain processes a single report.
 Each element can inspect, transform and digest reports.
 
 Elements are connected using the ``>>`` operator.
@@ -27,7 +27,15 @@ The following example removes all keys starting with ``"buff"`` from reports bef
 
 .. code:: python
 
-    core >> Filter(r"^buff\..*") >> LogFile("/tmp/xrdmon.log")
+    XrdReports(10333) >> Filter(r"^buff\..*") >> LogFile("/tmp/xrdmon.log")
+
+Writing a chain in a single statement is sometimes not practical.
+You can instead construct chains in pieces, and put them together later.
+
+    reports = XrdReports(10333) >> Filter(r"^buff\..*")
+    backend = LogFile("/tmp/xrdmon.log"))
+    chain = reports >> backend
+    core.mount(chain)
 
 Forking Streams
 ---------------
@@ -40,22 +48,14 @@ This is expressed by redirection to a ``tuple`` of consumers.
 
 .. code:: python
 
-    core >> (LogFile("/tmp/xrdmon.log"), CGIFile("/tmp/xrdmon.cgi"))
+    chain = reports >> (LogFile("/tmp/xrdmon.log"), CGIFile("/tmp/xrdmon.cgi"))
 
 Note that a consumer can be yet another chain.
 For example, this can be used to apply filters to only some output.
 
 .. code:: python
 
-    core >> (LogFile("/tmp/xrdmon.log"), Filter(r"^buff\..*") >> LogFile("/tmp/xrdmon_short.log"))
-
-Alternatively, you can redirect from one element multiple times.
-The following example gives the same result as the previous one.
-
-.. code:: python
-
-    core >> LogFile("/tmp/xrdmon.log")
-    core >> Filter(r"^buff\..*") >> LogFile("/tmp/xrdmon_short.log"))
+    chain = reports >> (LogFile("/tmp/xrdmon.log"), Filter(r"^buff\..*") >> LogFile("/tmp/xrdmon_short.log"))
 
 Default Elements
 ----------------
@@ -73,7 +73,7 @@ You can make use of the full Python syntax, including comments and scoping.
 
 .. code:: python
 
-    core >> (
+    reports >> (
         # verbose log
         LogFile("/tmp/xrdmon.log"),
         # long running, filtered log
@@ -88,6 +88,7 @@ Logging Setup
 
 All debug logging by ``xrdmonlib`` uses the default :py:mod:`logging` module.
 To change logging, simply import the module and configure it to your needs.
+For convenience, the :py:mod:`logging` module is available without an explicit import.
 
 .. code:: python
 
@@ -107,18 +108,20 @@ Each simply receives a ``dict`` via their :py:meth:`send` method.
 .. code:: python
 
     import time
-    from chainlet import ChainLink
+    from chainlet import funclink
 
-    # custom chain element
-    class Timestamper(ChainLink):
-        def send(self, value=None):
-            """
-            Digest a report, adding a timestamp
+    @funclink
+    def Timestamper(value=None):
+        """
+        Digest a report, adding a timestamp
 
-            :param value: an xrootd report to digest
-            :type value: dict
-            """
-            report['tme'] = time.time()
-            super(TimestampElement, self).send(report)
+        :param value: an xrootd report to digest
+        :type value: dict
+        """
+        report['tme'] = time.time()
+        return report
 
     core >> Timestamper() >> LogFile("/tmp/xrdmon_short.log"))
+
+.. [#chains] Chains use the :py:mod:`chainlet` modules.
+             `Read the docs<http://chainlet.readthedocs.io>`_ for more information on linking.

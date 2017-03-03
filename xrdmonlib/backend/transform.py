@@ -153,7 +153,7 @@ class ReportBlock(chainlet.ChainLink):
         return report
 
 
-@chainlet.GeneratorLink.linklet
+@chainlet.genlet
 def translate(key_map, cull_unknown=True):
     """
     Translate keys using a mapping

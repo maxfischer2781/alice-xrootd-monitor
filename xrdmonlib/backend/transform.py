@@ -124,10 +124,50 @@ class FormatTransform(chainlet.ChainLink):
             for key in report:
                 report_map['thiskey'] = key
                 new_report[report_fmt % report_map] = report[key]
-            report = new_report
-        super(FormatTransform, self).send(report)
+            return new_report
 
     def _elem_repr(self):
         return '%s(%s)' % (self.__class__.__name__, ', '.join(
             '%s=%r' % (key, getattr(self, key)) for key in ('report_fmt',)
         ))
+
+
+class ReportBlock(chainlet.ChainLink):
+    """
+    Blocks reports from being sent further down the chain
+
+    :param block: callable that returns `True` if a report should not propagate
+    :type block: callable
+
+    The `block` is called for every report, and gets the current `report` as
+    its sole argument.
+    """
+    def __init__(self, block=lambda report: True):
+        super(ReportBlock, self).__init__()
+        self.block = block
+
+    def send(self, report=None):
+        """Rename and pass on a report"""
+        if not self.block(report):
+            return self.stop_traversal
+        return report
+
+
+@chainlet.GeneratorLink.linklet
+def translate(key_map, cull_unknown=True):
+    """
+    Translate keys using a mapping
+
+    :param key_map: mapping from old to new keys
+    :param cull_unknown: whether to remove all unmapped keys
+    """
+    value = yield
+    while True:
+        value, old_value = {}, value
+        for key, val in old_value.items():
+            try:
+                value[key_map[key]] = val
+            except KeyError:
+                if not cull_unknown:
+                    value[key] = val
+        value = yield value

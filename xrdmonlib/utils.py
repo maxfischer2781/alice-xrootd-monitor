@@ -1,10 +1,15 @@
 """
 Various helper utilities
 """
+from __future__ import division, absolute_import
 import os
 import ast
 import sys
 import inspect
+import socket
+
+
+from . import compat
 
 
 def validate_process(pid, name=None):
@@ -70,3 +75,23 @@ def get_signature(target):
     if argspec.keywords:
         signature.append('**' + argspec.keywords)
     return '(%s)' % ', '.join(signature)
+
+
+_socket_flavours = {
+        'UDP': (socket.AF_INET, socket.SOCK_DGRAM),
+        'TCP': (socket.AF_INET, socket.SOCK_STREAM),
+        'UDP6': (socket.AF_INET6, socket.SOCK_DGRAM),
+        'TCP6': (socket.AF_INET6, socket.SOCK_STREAM),
+        'UNIXGRAM': (socket.AF_UNIX, socket.SOCK_DGRAM),
+        'UNIX': (socket.AF_UNIX, socket.SOCK_STREAM),
+    }
+
+
+def simple_socket(flavour):
+    """
+    A thin abstraction around `socket.socket`. Supports simple socket type
+    selection via `flavour`.
+    """
+    if isinstance(flavour, compat.string_type):
+        flavour = _socket_flavours[flavour.upper()]
+    return socket.socket(*flavour)

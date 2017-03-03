@@ -61,10 +61,8 @@ class XRootDReportStreamer(chainlet.ChainLink):
             self._logger.info('closed report stream on port %d (exit code: %s)', self.port, self._reportstreamer.poll())
             self._reportstreamer = None
 
-    def __iter__(self):
-        return self
-
-    def __next__(self):
+    def send(self, value=None):
+        """Fetch a report"""
         self.open()
         line = self._reportstreamer.stdout.readline()
         self._logger.debug('received datagram: %r', line)

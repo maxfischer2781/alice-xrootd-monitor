@@ -41,8 +41,7 @@ class ArgparseConfigHelp(argparse.Action):
         The configuration file must set the port to listen for reports and a
         chain for processing reports. A simple configuration looks like this:
 
-            core << Reports(12345)
-            core >> LogFile("/tmp/xrdmon.log")
+            core.mount(Reports(12345) >> LogFile("/tmp/xrdmon.log"))
 
         The report chain can use objects to transform or digest reports. The operation
         `a >> b` chains two elements a and b. Doing `a >> (b, c)` forks the report
@@ -178,11 +177,14 @@ def app_main():
         ('AliceMon', 'xrdmonlib.backend.apmon', 'AliceApMonBackend'),
         ('LogFile', 'xrdmonlib.backend.filepath', 'FileBackend'),
         ('CGIFile', 'xrdmonlib.backend.filepath', 'CGIFileBackend'),
+        ('Telegraf', 'xrdmonlib.backend.telegraf', 'telegraf_socket'),
         ('Filter', 'xrdmonlib.backend.transform', 'RegexFilter'),
+        ('Block', 'xrdmonlib.backend.transform', 'ReportBlock'),
+        ('Translate', 'xrdmonlib.backend.transform', 'translate'),
         ('Rename', 'xrdmonlib.backend.transform', 'FormatTransform'),
-        ('Reports', 'xrdmonlib.xrdreports', 'XRootDReportStreamer'),
-        ('Print', 'xrdmonlib.backend.logger', 'debug'),
-        ('Debug', 'xrdmonlib.backend.logger', 'log'),
+        ('XrdReports', 'xrdmonlib.xrdreports', 'XRootDReportStreamer'),
+        ('Debug', 'xrdmonlib.backend.logger', 'debug'),
+        ('Log', 'xrdmonlib.backend.logger', 'log'),
     )
     CONFIG_HELP.add_nicknames(*nicks)
     options = CLI.parse_args()

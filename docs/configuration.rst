@@ -124,4 +124,4 @@ Each simply receives a ``dict`` via their :py:meth:`send` method.
     core >> Timestamper() >> LogFile("/tmp/xrdmon_short.log"))
 
 .. [#chains] Chains use the :py:mod:`chainlet` modules.
-             `Read the docs<http://chainlet.readthedocs.io>`_ for more information on linking.
+             `Read the docs <http://chainlet.readthedocs.io>`_ for more information on linking.

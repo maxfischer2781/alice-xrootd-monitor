@@ -89,7 +89,7 @@ CLI_LOG.add_argument('-f', '--log-format', help='logging message format', defaul
 CLI_LOG.add_argument('-d', '--log-destinations', help='logging destinations, as file path or stderr/stdout', nargs='*', default=['stderr'])
 
 
-def cli_log_config(log_level, log_format, destinations, **_):
+def cli_log_config(log_level, log_format, log_destinations, **_):
     """
     Configure logging from CLI options
 
@@ -113,7 +113,7 @@ def cli_log_config(log_level, log_format, destinations, **_):
     root_fmt = logging.getLogger().handlers[0].formatter
     # we add handlers by ourselves to use appropriate classes
     # during initialisation, use the default handler in case something goes wrong
-    for destination in destinations:
+    for destination in log_destinations:
         if destination == 'stderr':
             root_handlers.append(logging.StreamHandler(sys.stderr))
         elif destination == 'stdout':

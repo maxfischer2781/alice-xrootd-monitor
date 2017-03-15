@@ -98,12 +98,13 @@ class AliceApMonBackend(chainlet.ChainLink):
         """Send reports via ApMon"""
         if value['pgm'] == 'xrootd':
             self._report_xrootd_space(value)
+        _report_cluster_name = '%(se_name)s_xrootd_ApMon_Info' % {'se_name': self.host_group}
         self._apmon.sendParameters(
-            clusterName='%(se_name)s_xrootd_ApMon_Info' % {'se_name': self.host_group},
+            clusterName=_report_cluster_name,
             nodeName=self._hostname,
             params=value
         )
-        self._logger.info('apmon report sent to %s' % str(self.destination))
+        self._logger.info('apmon report for %s sent to %s' % (_report_cluster_name, str(self.destination)))
 
     def _report_xrootd_space(self, report):
         """Send report for xrootd daemon space"""
@@ -118,12 +119,13 @@ class AliceApMonBackend(chainlet.ChainLink):
             'space_free': sum(report['oss.space.%d.free' % scount] for scount in range(space_count)) / self.scale_space / 1024,
             'space_largestfreechunk': sum(report['oss.space.%d.maxf' % scount] for scount in range(space_count)) / self.scale_space / 1024,
         }
+        _report_cluster_name = self._xrootd_cluster_name(report)
         self._apmon.sendParameters(
-            clusterName=self._xrootd_cluster_name(report),
+            clusterName=_report_cluster_name,
             nodeName=self._hostname,
             params=xrootd_report,
         )
-        self._logger.info('apmon xrootd space report sent to %s' % str(self.destination))
+        self._logger.info('apmon xrootd space report for %s sent to %s' % (_report_cluster_name, str(self.destination)))
 
     def _xrootd_cluster_name(self, report):
         """Format report information to create ALICE cluster name"""

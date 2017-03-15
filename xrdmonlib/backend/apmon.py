@@ -2,11 +2,12 @@ from __future__ import division, absolute_import
 
 import logging
 import socket
+import time
 
 import apmon
 import chainlet
 
-from .. import compat
+from .. import compat, utils
 
 
 class ApMonLogger(object):
@@ -82,6 +83,7 @@ class AliceApMonBackend(chainlet.ChainLink):
             self._hostname
         )
         self._apmon.enableBgMonitoring(True)
+        self._service_job_monitor = set()
 
     def _validate_parameters(self, host_group, destination):
         """validate parameters for cleaner configuration"""
@@ -96,6 +98,7 @@ class AliceApMonBackend(chainlet.ChainLink):
 
     def send(self, value=None):
         """Send reports via ApMon"""
+        self._monitor_service(value)
         if value['pgm'] == 'xrootd':
             self._report_xrootd_space(value)
         _report_cluster_name = '%(se_name)s_xrootd_ApMon_Info' % {'se_name': self.host_group}
@@ -105,6 +108,26 @@ class AliceApMonBackend(chainlet.ChainLink):
             params=value
         )
         self._logger.info('apmon report for %s sent to %s' % (_report_cluster_name, str(self.destination)))
+
+    def _monitor_service(self, report):
+        if 'pgm' not in report or 'pid' not in report:
+            return
+        pid, now = int(report['pid']), time.time()
+        # add new services for monitoring
+        if pid not in self._service_job_monitor:
+            _report_cluster_name = self._xrootd_cluster_name(report)
+            self._apmon.addJobToMonitor(
+                pid=pid,
+                workDir='',
+                clusterName=_report_cluster_name,
+                nodeName=self._hostname,
+            )
+            self._service_job_monitor.add(pid)
+            self._logger.info('apmon job monitor for %s added to %s' % (_report_cluster_name, str(self.destination)))
+        for pid in list(self._service_job_monitor):
+            if not utils.validate_process(pid):
+                self._apmon.removeJobToMonitor(pid)
+                self._service_job_monitor.discard(pid)
 
     def _report_xrootd_space(self, report):
         """Send report for xrootd daemon space"""

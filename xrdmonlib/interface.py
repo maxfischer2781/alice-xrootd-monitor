@@ -86,7 +86,7 @@ CONFIG_HELP = CLI.add_argument('--help-config', action=ArgparseConfigHelp)
 CLI_LOG = CLI.add_argument_group(title='debug logging facilities', description='See https://docs.python.org/2/library/logging.html for meaning of values')
 CLI_LOG.add_argument('-l', '--log-level', help='logging verbosity, numeric or name', default='WARNING')
 CLI_LOG.add_argument('-f', '--log-format', help='logging message format', default='%(asctime)s (%(process)d) %(levelname)8s: %(message)s')
-CLI_LOG.add_argument('-d', '--destinations', help='logging destinations, as file path or stderr/stdout', nargs='*', default=['stderr'])
+CLI_LOG.add_argument('-d', '--log-destinations', help='logging destinations, as file path or stderr/stdout', nargs='*', default=['stderr'])
 
 
 def cli_log_config(log_level, log_format, destinations, **_):

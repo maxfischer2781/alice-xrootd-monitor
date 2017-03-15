@@ -1,0 +1,13 @@
+# example for systemd service definition
+[Unit]
+Description=Processor for XRootD server report streams
+Documentation=https://github.com/maxfischer2781/xrdmon
+
+[Service]
+Type=simple
+ExecStart=/root/pyvenv_xrdmon/bin/xrdmon
+User=xrootd
+Nice=-19
+
+[Install]
+WantedBy=multi-user.target

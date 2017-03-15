@@ -89,7 +89,7 @@ CLI_LOG.add_argument('-f', '--log-format', help='logging message format', defaul
 CLI_LOG.add_argument('-d', '--log-destinations', help='logging destinations, as file path or stderr/stdout', nargs='*', default=['stderr'])
 
 
-def cli_log_config(log_level, log_format, log_destinations, **_):
+def cli_log_config(log_level, log_format, log_destinations):
     """
     Configure logging from CLI options
 
@@ -250,7 +250,9 @@ def app_main():
     )
     CONFIG_HELP.add_nicknames(*nicks)
     options = CLI.parse_args()
-    cli_log_config(**vars(options))
+    cli_log_config(
+        log_level=options.log_level, log_format=options.log_format, log_destinations=options.log_destinations
+    )
     config_interface = PyConfiguration(*nicks)
     monitor_core = config_interface.configure_core(options.config, trust_configs=options.trust_config)
     monitor_core.run()

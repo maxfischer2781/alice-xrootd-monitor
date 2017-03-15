@@ -76,7 +76,11 @@ class AliceApMonBackend(chainlet.ChainLink):
         apmon_logger, apmon.Logger = apmon.Logger, ApMonLogger
         self._apmon = apmon.ApMon((destination,))
         apmon.Logger = apmon_logger
-        # start monitoring
+        # configure background monitoring
+        self._apmon.setMonitorClusterNode(
+            '%(se_name)s_xrootd_SysInfo' % {'se_name': self.host_group},
+            self._hostname
+        )
         self._apmon.enableBgMonitoring(True)
 
     def _validate_parameters(self, host_group, destination):
@@ -92,11 +96,10 @@ class AliceApMonBackend(chainlet.ChainLink):
 
     def send(self, value=None):
         """Send reports via ApMon"""
-        self._apmon.sendBgMonitoring()
         if value['pgm'] == 'xrootd':
             self._report_xrootd_space(value)
         self._apmon.sendParameters(
-            clusterName='%(se_name)s_ApMon_Info' % {'se_name': self.host_group},
+            clusterName='%(se_name)s_xrootd_ApMon_Info' % {'se_name': self.host_group},
             nodeName=self._hostname,
             params=value
         )

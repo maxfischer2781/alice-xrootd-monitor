@@ -6,6 +6,9 @@ import os
 import platform
 import sys
 import textwrap
+import stat
+import errno
+import glob
 
 from . import compat
 from . import core
@@ -71,8 +74,15 @@ class ArgparseConfigHelp(argparse.Action):
 
 
 CLI = argparse.ArgumentParser(description='XRootD monitoring report multiplexer and logger')
-CLI.add_argument('config', help='path to configuration file', metavar='CONFIGPATH')
-CONFIG_HELP = CLI.add_argument('--config-help', action=ArgparseConfigHelp)
+CLI.add_argument(
+    'config',
+    help='path, directory or glob of configuration file(s)',
+    metavar='CONFIGPATH',
+    nargs='*',
+    default=['/etc/xrdmon/*.cfg']
+)
+CLI.add_argument('--trust-config', action='store_true')
+CONFIG_HELP = CLI.add_argument('--help-config', action=ArgparseConfigHelp)
 CLI_LOG = CLI.add_argument_group(title='debug logging facilities', description='See https://docs.python.org/2/library/logging.html for meaning of values')
 CLI_LOG.add_argument('-l', '--log-level', help='logging verbosity, numeric or name', default='WARNING')
 CLI_LOG.add_argument('-f', '--log-format', help='logging message format', default='%(asctime)s (%(process)d) %(levelname)8s: %(message)s')
@@ -126,6 +136,10 @@ def _map_import(module, name):
     return cls
 
 
+class UntrustedConfig(RuntimeError):
+    pass
+
+
 class PyConfiguration(object):
     """
     Configuration file interface for Python configuration files
@@ -152,21 +166,69 @@ class PyConfiguration(object):
             self.backends[nickname] = cls
             self._logger.debug('added config nickname %s => %s.%s', nickname, cls.__module__, cls.__name__)
 
-    def configure_core(self, config_path):
+    def _trust_path(self, path):
+        """
+        Assert that only root and current user are allowed to modify input path
+
+        :param path:
+        :return:
+        """
+        try:
+            path_stat = os.stat(path)
+        except OSError as oserror:
+            if oserror.errno == errno.ENOENT:
+                return False
+            raise
+        if not stat.S_ISREG(path_stat.st_mode):
+            raise UntrustedConfig(
+                'Not a file: %s' % path
+            )
+        elif not (path_stat.st_uid == 0 or path_stat.st_uid == os.geteuid()):
+            raise UntrustedConfig(
+                'Not owned by Root (uid=0) or current User (uid=%d): %s' % (os.geteuid(), path)
+            )
+        elif path_stat.st_mode & stat.S_IWOTH:
+            raise UntrustedConfig(
+                'Writeable by other users (mode=%o): %s' % (
+                    path_stat.st_mode & (stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO), path
+                )
+            )
+        else:
+            return True
+
+    def configure_core(self, config_paths, trust_configs=False):
         """Initialize a :py:class:`~.core.Core` from a configuration file"""
         self._logger.info('configuration interpreter: %s %s', platform.python_implementation(), platform.python_version())
         self._logger.info('using config nicknames %s', ', '.join(self.backends))
+        # resolve globs and directories
+        config_paths = (
+            path
+            for globpath in config_paths
+            # resolve globs
+            for rawpath in glob.glob(globpath)
+            # resolve directories
+            for path in ([rawpath] if os.path.isfile(rawpath) else (
+                rpath for rpath in os.listdir(rawpath) if os.path.isfile(rpath)))
+        )
+        read_configs = []
         # namespace available in the config file
         config_namespace = self.backends.copy()
         config_namespace['core'] = core.Core()
         config_namespace['logging'] = logging
-        self._logger.info('running configuration file %r', config_path)
-        config_dict = compat.run_path(
-            config_path,
-            init_globals=config_namespace,
-            run_name=os.path.basename(config_path)
-        )
-        return config_dict['core']
+        for config_path in config_paths:
+            if trust_configs or self._trust_path(config_path):
+                self._logger.info('running configuration file %r', config_path)
+                config_namespace = compat.run_path(
+                    config_path,
+                    init_globals=config_namespace,
+                    run_name=os.path.basename(config_path)
+                )
+                read_configs.append(config_path)
+            else:
+                self._logger.info('ignoring configuration file %r', config_path)
+        if not read_configs:
+            raise ValueError('No valid configuration file found')
+        return config_namespace['core']
 
 
 # Default __main__
@@ -190,6 +252,6 @@ def app_main():
     options = CLI.parse_args()
     cli_log_config(**vars(options))
     config_interface = PyConfiguration(*nicks)
-    monitor_core = config_interface.configure_core(options.config)
+    monitor_core = config_interface.configure_core(options.config, trust_configs=options.trust_config)
     monitor_core.run()
     return 0

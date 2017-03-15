@@ -148,7 +148,7 @@ class ReportBlock(chainlet.ChainLink):
 
     def send(self, report=None):
         """Rename and pass on a report"""
-        if not self.block(report):
+        if self.block(report):
             return self.stop_traversal
         return report
 

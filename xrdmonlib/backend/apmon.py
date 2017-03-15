@@ -100,6 +100,7 @@ class AliceApMonBackend(chainlet.ChainLink):
             nodeName=self._hostname,
             params=value
         )
+        self._logger.info('apmon report sent to %s' % str(self.destination))
 
     def _report_xrootd_space(self, report):
         """Send report for xrootd daemon space"""
@@ -119,6 +120,7 @@ class AliceApMonBackend(chainlet.ChainLink):
             nodeName=self._hostname,
             params=xrootd_report,
         )
+        self._logger.info('apmon xrootd space report sent to %s' % str(self.destination))
 
     def _xrootd_cluster_name(self, report):
         """Format report information to create ALICE cluster name"""

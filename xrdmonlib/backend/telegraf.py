@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division
 import sys
 import time
+import logging
 
 import chainlet
 
@@ -68,6 +69,7 @@ def telegraf_socket(address, name=sys.executable, tag_sets=None, tag_keys=(), fi
         Unix streaming. Address is a string `path` of a named socket in the filesystem, or a bytes `name` of a socket
         in the abstract Linux namespace.
     """
+    _logger = logging.getLogger('%s.%s' % (__name__, 'telegraf_socket'))
     tag_sets = tag_sets or {}
     _sock = utils.simple_socket(flavour=socket_type)
     report = yield
@@ -87,4 +89,5 @@ def telegraf_socket(address, name=sys.executable, tag_sets=None, tag_keys=(), fi
             )
         while message:
             message = message[_sock.sendto(message, address):]
+        _logger.info('telegraf report sent to %s' % str(address))
         report = yield

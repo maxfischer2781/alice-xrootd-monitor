@@ -7,6 +7,8 @@ import ast
 import sys
 import inspect
 import socket
+import weakref
+import threading
 
 
 from . import compat
@@ -95,3 +97,37 @@ def simple_socket(flavour):
     if isinstance(flavour, compat.string_type):
         flavour = _socket_flavours[flavour.upper()]
     return socket.socket(*flavour)
+
+
+class Singleton(object):
+    """
+    Basic implementation of a Singleton
+
+    Any instances constructed with the same arguments are actually the same object.
+    """
+    __singleton_store__ = weakref.WeakValueDictionary()
+    __singleton_mutex__ = threading.RLock()
+
+    @classmethod
+    def __singleton_signature__(cls, *args, **kwargs):
+        # args is always a tuple, but kwargs is mutable and arbitrarily sorted
+        return args, tuple(sorted(kwargs.items()))
+
+    def __new__(cls, *args, **kwargs):
+        identifier = cls.__singleton_signature__(*args, **kwargs)
+        with cls.__singleton_mutex__:
+            try:
+                self = cls.__singleton_store__[identifier]
+            except KeyError:
+                self = object.__new__(cls)
+                self_init = self.__init__
+                self.__singleton_init__ = True
+
+                def singleton_init(*args, **kwargs):
+                    """Wrapper to run init only once for each singleton instance"""
+                    if self.__singleton_init__:
+                        self_init(*args, **kwargs)
+                        self.__singleton_init__ = False
+                self.__init__ = singleton_init
+                cls.__singleton_store__[identifier] = self
+            return self

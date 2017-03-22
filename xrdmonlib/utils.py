@@ -131,3 +131,15 @@ class Singleton(object):
                 self.__init__ = singleton_init
                 cls.__singleton_store__[identifier] = self
             return self
+
+
+def viewkeys(mapping):
+    """
+    Return a view to the keys of `mapping`
+
+    :type mapping: dict
+    """
+    try:
+        return mapping.viewkeys()
+    except AttributeError:
+        return mapping.keys()

@@ -7,7 +7,8 @@ import time
 import apmon
 import chainlet
 
-from .. import compat, utils
+from .. import utils
+from ..utilities import dfs_counter
 
 
 class ApMonLogger(object):
@@ -50,110 +51,188 @@ for _level, _name in enumerate(ApMonLogger.apmon_levels):
     setattr(ApMonLogger, _name, _level)
 
 
-class AliceApMonBackend(chainlet.ChainLink):
+class ApMonReport(dict):
+    """
+    Container for named reports for ApMon
+
+    :param cluster_name: identifier for the host group this report applies to
+    :type cluster_name: str
+    :param node_name: identifier for the host this report applies to
+    :type node_name: str
+    :param params: parameters to send
+    :type params: dict
+    """
+    def __int__(self, cluster_name, node_name, params):
+        super(ApMonReport, self).__init__(self)
+        self.cluster_name = cluster_name
+        self.node_name = node_name
+        self.update(params)
+
+
+class ApMonConverter(chainlet.ChainLink):
+    def __init__(self):
+        super(ApMonConverter, self).__init__()
+        self._logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
+        self._hostname = socket.getfqdn()
+
+    def _xrootd_cluster_name(self, report):
+        """Format report information to create ALICE cluster name"""
+        return '%(se_name)s_%(instance)s_%(daemon)s_Services' % {
+            'se_name': report['site'],  # must be defined via all.sitename
+            'instance': report['ins'],
+            'daemon': report['pgm'],
+        }
+
+
+class XrootdSpace(ApMonConverter):
+    """
+    Extract XRootD Space information from reports
+
+    Provides key statistics on available space on an xrootd oss:
+
+    *xrootd_version*
+        The version of the xrootd daemon
+
+    *space_total*
+        The total space in MiB
+
+    *space_free*
+        The available space in MiB
+
+    *space_largestfreechunk*
+        The largest, consecutive available space in MiB
+    """
+    def __init__(self):
+        super(XrootdSpace, self).__init__()
+        self._space_counters = {}
+
+    def send(self, value=None):
+        space_count = value.get('oss.space')
+        if 'oss.space' not in value:
+            return self.stop_traversal
+        space_share = self._get_space_share(value)
+        xrootd_report = {
+            'xrootd_version': value['ver'],
+            # reports are in kiB, MonALISA expects MiB
+            'space_total': sum(value['oss.space.%d.tot' % scount] for scount in range(space_count)) * space_share / 1024,
+            'space_free': sum(value['oss.space.%d.free' % scount] for scount in range(space_count)) * space_share / 1024,
+            'space_largestfreechunk': sum(value['oss.space.%d.maxf' % scount] for scount in range(space_count)) * space_share / 1024,
+        }
+        return ApMonReport(cluster_name=self._xrootd_cluster_name(value), node_name=self._hostname, params=xrootd_report)
+
+    def _get_space_share(self, value):
+        space_count = value['oss.space']
+        # collect number of hosts concurrently serving from storage
+        space_paths = set(value['oss.space.%d.tot' % scount] for scount in range(space_count))
+        for space_path in space_paths:
+            if space_path not in self._space_counters:
+                self._space_counters[space_path] = dfs_counter.DFSCounter(space_path)
+        # clean up leftover paths
+        for space_path in set(utils.viewkeys(self._space_counters)):
+            if space_path not in space_paths:
+                del self._space_counters[space_path]
+        return sum(1/concurrency for concurrency in self._space_counters.values()) / len(self._space_counters)
+
+
+class AliceApMonBackend(ApMonConverter):
     """
     Backend for ApMon client to MonALISA Monitoring
 
-    Data is formatted according to conventions of the ALICE collaboration.
-
-    :param host_group: name of the cluster this node belongs to (SE name)
-    :type host_group: str
     :param destination: where to send data to, as `"hostname:port"`
     :type destination: str
-    :param scale_space: factor to scale storage space reports, on top of unit conversions
-    :type scale_space: int or float
     """
-    def __init__(self, host_group, destination, scale_space=1):
+    def __init__(self, *destination):
         super(AliceApMonBackend, self).__init__()
         self._logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
-        # configuration checks
-        self._validate_parameters(host_group, destination)
         # initialization
         self.destination = destination
-        self.host_group = host_group
-        self.scale_space = scale_space
-        self._hostname = socket.getfqdn()
-        # initialize ApMon, reroute logging
+        # initialize ApMon, reroute logging by replacing Logger at module level
         apmon_logger, apmon.Logger = apmon.Logger, ApMonLogger
-        self._apmon = apmon.ApMon((destination,))
+        self._apmon = apmon.ApMon(destination)
         apmon.Logger = apmon_logger
-        # configure background monitoring
-        self._apmon.setMonitorClusterNode(
-            '%(se_name)s_xrootd_SysInfo' % {'se_name': self.host_group},
-            self._hostname
-        )
-        self._apmon.enableBgMonitoring(True)
+        # background monitoring
+        self._background_monitor_sitename = None
         self._service_job_monitor = set()
-
-    def _validate_parameters(self, host_group, destination):
-        """validate parameters for cleaner configuration"""
-        if not isinstance(host_group, compat.string_type):
-            raise TypeError("%s: 'host_group' must be a string, got %r (%s)" % (
-                self.__class__.__name__, host_group, type(host_group).__name__
-            ))
-        if not isinstance(destination, compat.string_type):
-            raise TypeError("%s: 'destination' must be a string, got %r (%s)" % (
-                self.__class__.__name__, destination, type(destination).__name__
-            ))
 
     def send(self, value=None):
         """Send reports via ApMon"""
+        # preformatted report
+        if self._send_apmon_report(value):
+            return value
+        # regular xrootd report
+        self._monitor_host(value)
         self._monitor_service(value)
-        if value['pgm'] == 'xrootd':
-            self._report_xrootd_space(value)
-        _report_cluster_name = '%(se_name)s_xrootd_ApMon_Info' % {'se_name': self.host_group}
-        self._apmon.sendParameters(
-            clusterName=_report_cluster_name,
-            nodeName=self._hostname,
+
+    def _send_apmon_report(self, value):
+        """Send a report preprocessed for apmon"""
+        try:
+            cluster_name = value.cluster_name
+            node_name = value.node_name
+        except AttributeError:
+            return False
+        else:
+            self._apmon.sendParameters(
+                clusterName=cluster_name,
+                nodeName=node_name,
+                params=value
+            )
+            self._logger.info('apmon report for %s@%s sent to %s' % (cluster_name, node_name, str(self.destination)))
+            return True
+
+    def _send_raw_report(self, value):
+        """Send a raw report from xrootd"""
+        self._send_apmon_report(ApMonReport(
+            cluster_name='%(se_name)s_xrootd_ApMon_Info' % {'se_name': value['site']},
+            node_name=self._hostname,
             params=value
+        ))
+
+    def _monitor_host(self, value):
+        """Add background monitoring for this host"""
+        try:
+            se_name = value['site']
+        except KeyError:
+            return False
+        if self._background_monitor_sitename == se_name:
+            return
+        # configure background monitoring
+        cluster_name = '%(se_name)s_xrootd_SysInfo' % {'se_name': se_name}
+        self._apmon.setMonitorClusterNode(
+            cluster_name,
+            self._hostname
         )
-        self._logger.info('apmon report for %s sent to %s' % (_report_cluster_name, str(self.destination)))
+        self._apmon.enableBgMonitoring(True)
+        self._background_monitor_sitename = se_name
+        self._logger.info(
+            'apmon host monitor for %s@%s added to %s' % (cluster_name, self._hostname, str(self.destination))
+        )
+        return True
 
     def _monitor_service(self, report):
+        """Add background monitoring for a service"""
         if 'pgm' not in report or 'pid' not in report:
             return
         pid, now = int(report['pid']), time.time()
         # add new services for monitoring
         if pid not in self._service_job_monitor:
-            _report_cluster_name = self._xrootd_cluster_name(report)
+            cluster_name = self._xrootd_cluster_name(report)
             self._apmon.addJobToMonitor(
                 pid=pid,
                 workDir='',
-                clusterName=_report_cluster_name,
+                clusterName=cluster_name,
                 nodeName=self._hostname,
             )
             self._service_job_monitor.add(pid)
-            self._logger.info('apmon job monitor for %s added to %s' % (_report_cluster_name, str(self.destination)))
+            self._logger.info(
+                'apmon job monitor for %s@%s added to %s' % (cluster_name, self._hostname, str(self.destination))
+            )
         for pid in list(self._service_job_monitor):
             if not utils.validate_process(pid):
                 self._apmon.removeJobToMonitor(pid)
                 self._service_job_monitor.discard(pid)
 
-    def _report_xrootd_space(self, report):
-        """Send report for xrootd daemon space"""
-        space_count = report.get('oss.space')
-        if space_count is None:
-            self._logger.warning("missing key group 'oss.space.*' in report, skipping storage space report")
-            return
-        xrootd_report = {
-            'xrootd_version': report['ver'],
-            # reports are in kiB, MonALISA expects MiB
-            'space_total': sum(report['oss.space.%d.tot' % scount] for scount in range(space_count)) / self.scale_space / 1024,
-            'space_free': sum(report['oss.space.%d.free' % scount] for scount in range(space_count)) / self.scale_space / 1024,
-            'space_largestfreechunk': sum(report['oss.space.%d.maxf' % scount] for scount in range(space_count)) / self.scale_space / 1024,
-        }
-        _report_cluster_name = self._xrootd_cluster_name(report)
-        self._apmon.sendParameters(
-            clusterName=_report_cluster_name,
-            nodeName=self._hostname,
-            params=xrootd_report,
-        )
-        self._logger.info('apmon xrootd space report for %s sent to %s' % (_report_cluster_name, str(self.destination)))
 
-    def _xrootd_cluster_name(self, report):
-        """Format report information to create ALICE cluster name"""
-        return '%(se_name)s_%(name)s_%(flavour)s_Services' % {
-            'se_name': self.host_group,
-            'name': report['ins'],
-            'flavour': report['pgm'],
-        }
+#: full ALICE monitoring backend stack
+def alice_apmon(*destinations):
+    backend = AliceApMonBackend(*destinations)
+    return XrootdSpace() >> backend, backend

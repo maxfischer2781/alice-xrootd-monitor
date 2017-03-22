@@ -241,4 +241,4 @@ def alice_apmon(*destinations):
     :type destination: str
     """
     backend = AliceApMonBackend(*destinations)
-    return XrootdSpace() >> backend, backend
+    return chainlet.ChainLink() >> (XrootdSpace() >> backend, backend)

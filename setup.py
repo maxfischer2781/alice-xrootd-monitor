@@ -24,7 +24,7 @@ if __name__ == '__main__':
             ],
         },
         # dependencies
-        install_requires=['apmon', 'chainlet>=0.9'],
+        install_requires=['apmon', 'chainlet>=0.9', 'filelock'],
         # metadata for package seach
         classifiers=[
             'Development Status :: 5 - Production/Stable',

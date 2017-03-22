@@ -15,7 +15,7 @@ import operator
 def _count_updater(self):
     """separate counter loop to regularly check/verify state"""
     assert isinstance(self, weakref.ProxyTypes), "counter thread must receive weakref'd self to be collectible"
-    self._logger.info('acquiring %r', self.__repr__(), self._marker_path)
+    self._logger.info('acquiring %r @ %r', self.__repr__(), self._marker_path)
     marker_path = self._marker_path
     thread_shutdown = self._thread_shutdown
     with self._host_lock:

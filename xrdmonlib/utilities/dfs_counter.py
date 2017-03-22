@@ -56,6 +56,12 @@ class DFSCounter(object):
         self._count_value = 0
         self._thread = threading.Thread(target=_count_updater, args=(weakref.proxy(self),))
         self._thread.start()
+        # block until we own the resource
+        block_delay = 0.005
+        while not self._host_lock.is_locked:
+            self._logger.info('waiting for exclusive host lock @ %r', self._marker_path)
+            time.sleep(block_delay)
+            block_delay = min(block_delay * 2, 5)
 
     def _get_marker_path(self, identifier):
         return '%sdfsc-%s.csv' % (self.shared_path, identifier)

@@ -236,7 +236,7 @@ def app_main():
     """XrdMon executable main function"""
     # TODO: import this from backends
     nicks = (
-        ('AliceMon', 'xrdmonlib.backend.apmon', 'AliceApMonBackend'),
+        ('AliceMon', 'xrdmonlib.backend.apmon', 'alice_apmon'),
         ('LogFile', 'xrdmonlib.backend.filepath', 'FileBackend'),
         ('CGIFile', 'xrdmonlib.backend.filepath', 'CGIFileBackend'),
         ('Telegraf', 'xrdmonlib.backend.telegraf', 'telegraf_socket'),

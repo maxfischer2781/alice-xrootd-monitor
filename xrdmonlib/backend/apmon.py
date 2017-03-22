@@ -234,5 +234,11 @@ class AliceApMonBackend(ApMonConverter):
 
 #: full ALICE monitoring backend stack
 def alice_apmon(*destinations):
+    """
+    Factory for ALICE ApMon Backend
+
+    :param destination: where to send data to, as `"hostname:port"`
+    :type destination: str
+    """
     backend = AliceApMonBackend(*destinations)
     return XrootdSpace() >> backend, backend

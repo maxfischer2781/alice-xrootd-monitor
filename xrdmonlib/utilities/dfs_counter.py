@@ -8,6 +8,9 @@ import threading
 import logging
 import weakref
 import operator
+import random
+
+from ..utils import Singleton
 
 
 # actually a method of DFSCounter
@@ -15,34 +18,42 @@ import operator
 def _count_updater(self):
     """separate counter loop to regularly check/verify state"""
     assert isinstance(self, weakref.ProxyTypes), "counter thread must receive weakref'd self to be collectible"
-    self._logger.info('acquiring %r @ %r', self.__repr__(), self._marker_path)
+    # locally rebind everything we need to work
+    self_repr = self.__repr__()
     marker_path = self._marker_path
     thread_shutdown = self._thread_shutdown
-    with self._host_lock:
+    host_lock = self._host_lock
+    self._logger.info('acquiring %r @ %r', self_repr, marker_path)
+    with host_lock:
         while not thread_shutdown.is_set():
             try:
                 with open(self._marker_path, 'wb') as marker:
                     marker.write('%s %s' % (self._host_identifier, os.getpid()))
                 self._count_value = self._get_count()
-                self._thread_shutdown.wait(self.timeout / 4)
+                # wait for a fraction of timeout to allow write failures
+                # jitter wait to smooth out path access
+                thread_shutdown.wait(self.timeout / (3 + random.random()))
             except ReferenceError:
-                break
+                pass
             except Exception as err:
                 self._logger.info('failed updating %r: %s', self.__repr__(), err)
+        self._logger.info('releasing %r @ %r', self_repr, marker_path)
         if os.path.exists(marker_path) and os.path.isfile(marker_path):
             os.unlink(marker_path)
 
 
-class DFSCounter(object):
+class DFSCounter(Singleton):
     """
-    Counter for processes accessing the same Distributed File System
+    Counter for hosts accessing the same Distributed File System
 
     :param shared_path: path used for synchronisation
     :type shared_path: str
     :param timeout: maximum age of synchronisation in seconds before assuming stale processes
     :type timeout: int or float
 
-    This class pretends to be an integer for all intents and purposes.
+    This class pretends to be an integer for all operators. It counts the number
+    of processes accessing the `shared_path`, and directly represents the result.
+    Only one process per host may claim the `shared_path` at any time.
     """
     def __init__(self, shared_path, timeout=300):
         self._logger = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
@@ -56,6 +67,14 @@ class DFSCounter(object):
         self._count_value = 0
         self._thread = threading.Thread(target=_count_updater, args=(weakref.proxy(self),))
         self._thread.start()
+        self._acquire()
+
+    @classmethod
+    def __singleton_signature__(cls, shared_path):
+        # args is always a tuple, but kwargs is mutable and arbitrarily sorted
+        return DFSCounter, shared_path
+
+    def _acquire(self):
         # block until we own the resource
         block_delay = 0.005
         while not self._host_lock.is_locked:

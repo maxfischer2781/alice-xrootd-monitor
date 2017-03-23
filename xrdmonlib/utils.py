@@ -111,7 +111,7 @@ class Singleton(object):
     @classmethod
     def __singleton_signature__(cls, *args, **kwargs):
         # args is always a tuple, but kwargs is mutable and arbitrarily sorted
-        return args, tuple(sorted(kwargs.items()))
+        return cls, args, tuple(sorted(kwargs.items()))
 
     def __new__(cls, *args, **kwargs):
         identifier = cls.__singleton_signature__(*args, **kwargs)

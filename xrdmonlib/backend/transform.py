@@ -153,6 +153,22 @@ class ReportBlock(chainlet.ChainLink):
         return report
 
 
+@chainlet.funclet
+def report_insert(value, iterable=None, **kwargs):
+    """
+    Insert ``key: value`` pairs into the report
+
+    :param iterable: iterable of ``(key, value)`` pairs
+    :param kwargs: explicit ``key=value`` parameters
+    """
+    value = value.copy()
+    if iterable:
+        value.update(iterable, **kwargs)
+    else:
+        value.update(**kwargs)
+    return value
+
+
 @chainlet.genlet
 def translate(key_map, cull_unknown=True):
     """

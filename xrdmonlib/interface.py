@@ -242,6 +242,7 @@ def app_main():
         ('Telegraf', 'xrdmonlib.backend.telegraf', 'telegraf_socket'),
         ('Filter', 'xrdmonlib.backend.transform', 'RegexFilter'),
         ('Block', 'xrdmonlib.backend.transform', 'ReportBlock'),
+        ('Insert', 'xrdmonlib.backend.transform', 'report_insert'),
         ('Translate', 'xrdmonlib.backend.transform', 'translate'),
         ('Rename', 'xrdmonlib.backend.transform', 'FormatTransform'),
         ('XrdReports', 'xrdmonlib.xrdreports', 'XRootDReportStreamer'),

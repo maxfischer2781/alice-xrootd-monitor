@@ -137,6 +137,7 @@ def _map_import(module, name):
 
 
 class UntrustedConfig(RuntimeError):
+    """A configuration file is not secure against tampering"""
     pass
 
 

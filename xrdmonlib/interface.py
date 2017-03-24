@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import argparse
 import logging.handlers
@@ -74,15 +74,18 @@ class ArgparseConfigHelp(argparse.Action):
 
 
 CLI = argparse.ArgumentParser(description='XRootD monitoring report multiplexer and logger')
-CLI.add_argument(
+# Configuration Settings
+CLI_CONFIG = CLI.add_argument_group(title='debug logging facilities')
+CLI_CONFIG.add_argument(
     'config',
     help='path, directory or glob of configuration file(s)',
     metavar='CONFIGPATH',
     nargs='*',
     default=['/etc/xrdmon/*.cfg']
 )
-CLI.add_argument('--trust-config', action='store_true')
-CONFIG_HELP = CLI.add_argument('--help-config', action=ArgparseConfigHelp)
+CLI_CONFIG.add_argument('--trust-config', action='store_true')
+CONFIG_HELP = CLI_CONFIG.add_argument('--help-config', action=ArgparseConfigHelp)
+# Logging Settings
 CLI_LOG = CLI.add_argument_group(title='debug logging facilities', description='See https://docs.python.org/2/library/logging.html for meaning of values')
 CLI_LOG.add_argument('-l', '--log-level', help='logging verbosity, numeric or name', default='WARNING')
 CLI_LOG.add_argument('-f', '--log-format', help='logging message format', default='%(asctime)s (%(process)d) %(levelname)8s: %(message)s')
@@ -124,6 +127,23 @@ def cli_log_config(log_level, log_format, log_destinations):
             root_handlers.append(logging.handlers.WatchedFileHandler(filename=destination))
         root_handlers[-1].setFormatter(root_fmt)
     logging.getLogger().handlers[:] = root_handlers
+
+
+#: entry points to load plugins from
+CONFIG_ENTRY_POINTS = ['xrdmonlib.config.core', 'xrdmonlib.config.xrootd']
+
+
+def _get_entry_point_nicks(*entry_points):
+    """Load entry points, with entries in the form `Nick = module:object`"""
+    if not entry_points:
+        return ()
+    nicks = []
+    import pkg_resources
+    for group in entry_points:
+        for entry_point in pkg_resources.iter_entry_points(group):
+            nick, module, name = entry_point.name, entry_point.module_name, '.'.join(entry_point.attrs)
+            nicks.append((nick, module, name))
+    return nicks
 
 
 def _map_import(module, name):
@@ -235,21 +255,7 @@ class PyConfiguration(object):
 # Default __main__
 def app_main():
     """XrdMon executable main function"""
-    # TODO: import this from backends
-    nicks = (
-        ('AliceMon', 'xrdmonlib.backend.apmon', 'alice_apmon'),
-        ('LogFile', 'xrdmonlib.backend.filepath', 'FileBackend'),
-        ('CGIFile', 'xrdmonlib.backend.filepath', 'CGIFileBackend'),
-        ('Telegraf', 'xrdmonlib.backend.telegraf', 'telegraf_socket'),
-        ('Filter', 'xrdmonlib.backend.transform', 'RegexFilter'),
-        ('Block', 'xrdmonlib.backend.transform', 'ReportBlock'),
-        ('Insert', 'xrdmonlib.backend.transform', 'report_insert'),
-        ('Translate', 'xrdmonlib.backend.transform', 'translate'),
-        ('Rename', 'xrdmonlib.backend.transform', 'FormatTransform'),
-        ('XrdReports', 'xrdmonlib.xrdreports', 'XRootDReportStreamer'),
-        ('Debug', 'xrdmonlib.backend.logger', 'debug'),
-        ('Log', 'xrdmonlib.backend.logger', 'log'),
-    )
+    nicks = _get_entry_point_nicks(*CONFIG_ENTRY_POINTS)
     CONFIG_HELP.add_nicknames(*nicks)
     options = CLI.parse_args()
     cli_log_config(

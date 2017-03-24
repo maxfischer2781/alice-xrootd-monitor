@@ -62,7 +62,7 @@ class ApMonReport(dict):
     :param params: parameters to send
     :type params: dict
     """
-    def __int__(self, cluster_name, node_name, params):
+    def __init__(self, cluster_name, node_name, params):
         super(ApMonReport, self).__init__(self)
         self.cluster_name = cluster_name
         self.node_name = node_name

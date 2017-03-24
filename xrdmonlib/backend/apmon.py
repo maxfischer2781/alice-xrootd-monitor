@@ -168,12 +168,9 @@ class AliceApMonBackend(ApMonConverter):
 
     def _send_apmon_report(self, value):
         """Send a report preprocessed for apmon"""
-        try:
+        if isinstance(value, ApMonReport):
             cluster_name = value.cluster_name
             node_name = value.node_name
-        except AttributeError:
-            return False
-        else:
             self._apmon.sendParameters(
                 clusterName=cluster_name,
                 nodeName=node_name,
@@ -181,6 +178,8 @@ class AliceApMonBackend(ApMonConverter):
             )
             self._logger.info('apmon report for %r @ %r sent to %s' % (cluster_name, node_name, str(self.destination)))
             return True
+        else:
+            return False
 
     def _send_raw_report(self, value):
         """Send a raw report from xrootd"""

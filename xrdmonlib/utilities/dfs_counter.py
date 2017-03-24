@@ -23,12 +23,15 @@ def _count_updater(self):
     marker_path = self._marker_path
     thread_shutdown = self._thread_shutdown
     host_lock = self._host_lock
+    host_identifier = self._host_identifier
+    logger = self._logger
     self._logger.info('acquiring %r @ %r', self_repr, marker_path)
     with host_lock:
         while not thread_shutdown.is_set():
             try:
                 with open(self._marker_path, 'wb') as marker:
-                    marker.write('%s %s' % (self._host_identifier, os.getpid()))
+                    marker.write('%s %s' % (host_identifier, os.getpid()))
+                    logger.debug('marking %r @ %r', self_repr, marker_path)
                 self._count_value = self._get_count()
                 # wait for a fraction of timeout to allow write failures
                 # jitter wait to smooth out path access
@@ -36,8 +39,8 @@ def _count_updater(self):
             except ReferenceError:
                 pass
             except Exception as err:
-                self._logger.info('failed updating %r: %s', self.__repr__(), err)
-        self._logger.info('releasing %r @ %r', self_repr, marker_path)
+                logger.warning('failed updating %r: %s', self_repr, err)
+        logger.info('releasing %r @ %r', self_repr, marker_path)
         if os.path.exists(marker_path) and os.path.isfile(marker_path):
             os.unlink(marker_path)
 
@@ -77,7 +80,8 @@ class DFSCounter(Singleton):
     def _acquire(self):
         # block until we own the resource
         block_delay = 0.005
-        while not self._host_lock.is_locked:
+        # we need to both OWN the resource (lock) and GET it as well (counter)
+        while not self._host_lock.is_locked and self._count_value == 0:
             self._logger.info('waiting for exclusive host lock @ %r', self._marker_path)
             time.sleep(block_delay)
             block_delay = min(block_delay * 2, 5)

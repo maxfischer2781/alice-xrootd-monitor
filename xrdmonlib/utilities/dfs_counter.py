@@ -73,7 +73,7 @@ class DFSCounter(Singleton):
         self._acquire()
 
     @classmethod
-    def __singleton_signature__(cls, shared_path, timeout):
+    def __singleton_signature__(cls, shared_path, timeout=300):
         # args is always a tuple, but kwargs is mutable and arbitrarily sorted
         return DFSCounter, shared_path
 

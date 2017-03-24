@@ -126,7 +126,7 @@ class XrootdSpace(ApMonConverter):
     def _get_space_share(self, value):
         space_count = value['oss.space']
         # collect number of hosts concurrently serving from storage
-        space_paths = set(value['oss.space.%d.path' % scount] for scount in range(space_count))
+        space_paths = set(value['oss.paths.%d.rp' % scount] for scount in range(space_count))
         for space_path in space_paths:
             if space_path not in self._space_counters:
                 self._space_counters[space_path] = dfs_counter.DFSCounter(space_path)

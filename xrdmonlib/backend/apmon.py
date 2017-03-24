@@ -179,7 +179,7 @@ class AliceApMonBackend(ApMonConverter):
                 nodeName=node_name,
                 params=value
             )
-            self._logger.info('apmon report for %s@%s sent to %s' % (cluster_name, node_name, str(self.destination)))
+            self._logger.info('apmon report for %r @ %r sent to %s' % (cluster_name, node_name, str(self.destination)))
             return True
 
     def _send_raw_report(self, value):
@@ -207,7 +207,7 @@ class AliceApMonBackend(ApMonConverter):
         self._apmon.enableBgMonitoring(True)
         self._background_monitor_sitename = se_name
         self._logger.info(
-            'apmon host monitor for %s@%s added to %s' % (cluster_name, self._hostname, str(self.destination))
+            'apmon host monitor for %r @ %r added to %s' % (cluster_name, self._hostname, str(self.destination))
         )
         return True
 
@@ -227,7 +227,7 @@ class AliceApMonBackend(ApMonConverter):
             )
             self._service_job_monitor.add(pid)
             self._logger.info(
-                'apmon job monitor for %s@%s added to %s' % (cluster_name, self._hostname, str(self.destination))
+                'apmon job monitor for %r @ %r added to %s' % (cluster_name, self._hostname, str(self.destination))
             )
         for pid in list(self._service_job_monitor):
             if not utils.validate_process(pid):

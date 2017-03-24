@@ -67,7 +67,7 @@ class DFSCounter(Singleton):
         self._host_lock = filelock.FileLock(self._marker_path + '.lock')
         self._thread_shutdown = threading.Event()
         self._thread_shutdown.clear()
-        self._count_value = 0
+        self._count_value = None
         self._thread = threading.Thread(target=_count_updater, args=(weakref.proxy(self),))
         self._thread.start()
         self._acquire()
@@ -81,7 +81,7 @@ class DFSCounter(Singleton):
         # block until we own the resource
         block_delay = 0.005
         # we need to both OWN the resource (lock) and GET it as well (counter)
-        while not self._host_lock.is_locked and self._count_value == 0:
+        while not self._host_lock.is_locked or self._count_value is None:
             self._logger.debug('waiting for exclusive host lock @ %r', self._marker_path)
             time.sleep(block_delay)
             block_delay = min(block_delay * 2, 5)

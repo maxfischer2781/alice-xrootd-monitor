@@ -19,7 +19,7 @@ def _count_updater(self):
     """separate counter loop to regularly check/verify state"""
     assert isinstance(self, weakref.ProxyTypes), "counter thread must receive weakref'd self to be collectible"
     # locally rebind everything we need to work
-    self_repr = self.__repr__().replace('value=0', 'value=?')
+    self_repr = self.__repr__().replace('value=None', 'value=?')
     marker_path = self._marker_path
     thread_shutdown = self._thread_shutdown
     host_lock = self._host_lock
@@ -73,7 +73,7 @@ class DFSCounter(Singleton):
         self._acquire()
 
     @classmethod
-    def __singleton_signature__(cls, shared_path):
+    def __singleton_signature__(cls, shared_path, timeout):
         # args is always a tuple, but kwargs is mutable and arbitrarily sorted
         return DFSCounter, shared_path
 
@@ -107,7 +107,7 @@ class DFSCounter(Singleton):
         return str(int(self))
 
     def __repr__(self):
-        return '<%s(shared_path=%s, timeout=%s), value=%d>' % (
+        return '<%s(shared_path=%s, timeout=%s), value=%s>' % (
             type(self).__name__, self.shared_path, self.timeout, self._count_value
         )
 

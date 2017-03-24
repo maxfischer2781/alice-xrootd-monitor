@@ -107,7 +107,7 @@ class DFSCounter(Singleton):
         return str(int(self))
 
     def __repr__(self):
-        return '<%s(shared_path=%s, timeout=%s), value=%s>' % (
+        return '<%s(shared_path=%r, timeout=%s), value=%s>' % (
             type(self).__name__, self.shared_path, self.timeout, self._count_value
         )
 

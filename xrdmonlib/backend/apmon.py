@@ -134,6 +134,7 @@ class XrootdSpace(ApMonConverter):
         for space_path in set(utils.viewkeys(self._space_counters)):
             if space_path not in space_paths:
                 del self._space_counters[space_path]
+        self._logger.debug('xrootd space share counters: %r', self._space_counters)
         return sum(1/concurrency for concurrency in self._space_counters.values()) / len(self._space_counters)
 
 

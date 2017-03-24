@@ -19,7 +19,7 @@ def _count_updater(self):
     """separate counter loop to regularly check/verify state"""
     assert isinstance(self, weakref.ProxyTypes), "counter thread must receive weakref'd self to be collectible"
     # locally rebind everything we need to work
-    self_repr = self.__repr__()
+    self_repr = self.__repr__().replace('value=0', 'value=?')
     marker_path = self._marker_path
     thread_shutdown = self._thread_shutdown
     host_lock = self._host_lock
@@ -29,7 +29,7 @@ def _count_updater(self):
     with host_lock:
         while not thread_shutdown.is_set():
             try:
-                with open(self._marker_path, 'wb') as marker:
+                with open(marker_path, 'wb') as marker:
                     marker.write('%s %s' % (host_identifier, os.getpid()))
                     logger.debug('marking %r @ %r', self_repr, marker_path)
                 self._count_value = self._get_count()
@@ -82,9 +82,10 @@ class DFSCounter(Singleton):
         block_delay = 0.005
         # we need to both OWN the resource (lock) and GET it as well (counter)
         while not self._host_lock.is_locked and self._count_value == 0:
-            self._logger.info('waiting for exclusive host lock @ %r', self._marker_path)
+            self._logger.debug('waiting for exclusive host lock @ %r', self._marker_path)
             time.sleep(block_delay)
             block_delay = min(block_delay * 2, 5)
+        self._logger.debug('acquired %r', self)
 
     def _get_marker_path(self, identifier):
         return '%sdfsc-%s.csv' % (self.shared_path, identifier)
